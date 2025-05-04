@@ -511,12 +511,32 @@ const asyncRoutes = [
   },
 
   {
-    path: 'external-link',
+    path: 'luogu-link',
     component: 'layout/Layout',
     children: [
       {
-        path: 'https://github.com/PanJiaChen/vue-element-admin',
-        meta: { title: 'External Link', icon: 'link' }
+        path: 'https://www.luogu.com.cn/',
+        meta: { title: 'Luogu', icon: 'link' }
+      }
+    ]
+  },
+  {
+    path: 'codeforces-link',
+    component: 'layout/Layout',
+    children: [
+      {
+        path: 'https://codeforces.com/',
+        meta: { title: 'Codeforces', icon: 'link' }
+      }
+    ]
+  },
+  {
+    path: 'poj-link',
+    component: 'layout/Layout',
+    children: [
+      {
+        path: 'http://poj.org/',
+        meta: { title: 'POJ', icon: 'link' }
       }
     ]
   },
