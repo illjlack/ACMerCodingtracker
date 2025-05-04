@@ -6,10 +6,13 @@ const state = {
 const mutations = {
   ADD_VISITED_VIEW: (state, view) => {
     if (state.visitedViews.some(v => v.path === view.path)) return
+    // 动态生成标签标题
+    let title = view.meta.title || 'no-name'
+    if (view.name === 'userPbInfo' && view.params && view.params.username) {
+      title = `${view.params.username} 的个人做题信息`
+    }
     state.visitedViews.push(
-      Object.assign({}, view, {
-        title: view.meta.title || 'no-name'
-      })
+      Object.assign({}, view, { title })
     )
   },
   ADD_CACHED_VIEW: (state, view) => {

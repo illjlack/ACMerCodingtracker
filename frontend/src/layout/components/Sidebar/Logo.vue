@@ -24,8 +24,8 @@ export default {
   },
   data() {
     return {
-      title: 'Vue Element Admin',
-      logo: 'https://wpimg.wallstcn.com/69a1c46c-eb1c-4b46-8bd4-e9e686ef5251.png'
+      title: 'ACMerCodingtracker',
+      logo: 'https://icpc2021.ntub.edu.tw/wp-content/uploads/2021/09/icpc-logo-sq-768x714.png'
     }
   }
 }

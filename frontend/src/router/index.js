@@ -5,6 +5,11 @@ Vue.use(Router)
 
 /* Layout */
 import Layout from '@/layout'
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+import route from 'svgo/plugins/prefixIds'
+// eslint-disable-next-line no-unused-vars
+import log from 'echarts/src/scale/Log'
 
 /**
  * constantRoutes
@@ -48,30 +53,45 @@ export const constantRoutes = [
     component: () => import('@/views/error-page/401'),
     hidden: true
   },
-
-  // 个人信息页
   {
     path: '/profile',
     component: Layout,
+    redirect: '/profile/index',
+    hidden: true,
     children: [
       {
-        path: '',
+        path: 'index',
         component: () => import('@/views/profile/index'),
         name: 'Profile',
-        meta: { title: '个人信息', icon: 'user', noCache: true }
+        meta: { title: 'Profile', icon: 'user', noCache: true }
       }
     ]
   },
+
   // 做题信息页
   {
-    path: '/problems',
+    path: '/allPbInfo',
     component: Layout,
     children: [
       {
         path: '',
-        component: () => import('@/views/profile/index'),
-        name: 'Problems',
-        meta: { title: '做题信息', icon: 'edit', noCache: true }
+        component: () => import('@/views/allPbInfo/index'),
+        name: 'allPbInfo',
+        meta: { title: '团队做题信息', icon: 'peoples', noCache: true }
+      }
+    ]
+  },
+  {
+    path: '/userPbInfo/:name',
+    component: Layout,
+    hidden: true,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/userPbInfo/index'),
+        name: 'UserPbInfo',
+        props: route => ({ name: route.params.name }),
+        meta: { title: ':name的个人做题信息', icon: 'user', noCache: true, needDynamic: true, roles: ['admin', 'editor', 'user'] }
       }
     ]
   },
@@ -111,6 +131,24 @@ export const constantRoutes = [
   }
 ]
 
+export const asyncRoutes = [
+  // 个人做题信息页：可选传参 userId
+  {
+    path: '/userPbInfo',
+    component: Layout,
+    children: [
+      {
+        path: ':name',
+        component: () => import('@/views/userPbInfo/index'),
+        name: 'UserPbInfo',
+        props: route => ({ name: route.params.name }),
+        meta: { title: '个人做题信息', icon: 'user', noCache: true, needDynamic: true, roles: ['admin', 'editor', 'user'] }
+      }
+    ]
+  },
+  { path: '*', redirect: '/404', hidden: true }
+]
+
 const createRouter = () =>
   new Router({
     // mode: 'history', // 若需使用 history 模式，后端需支持
@@ -129,3 +167,13 @@ export function resetRouter() {
 }
 
 export default router
+
+router.beforeEach((to, from, next) => {
+  // 如果路由的 meta.title 是函数，则调用它并设置为页面标题
+  if (to.meta && to.meta.title) {
+    if (to.meta.title.includes('的个人做题信息')) {
+      to.meta.title = to.params.name + '的个人做题信息'
+    }
+  }
+  next()
+})

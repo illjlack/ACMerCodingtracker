@@ -12,7 +12,10 @@
           height="100px"
           width="100px"
           :hoverable="false"
-        />
+        >
+          <div>Hello</div>
+          {{ user.role }}
+        </pan-thumb>
       </div>
       <div class="box-center">
         <div class="user-realname text-center">{{ user.realName }}</div>

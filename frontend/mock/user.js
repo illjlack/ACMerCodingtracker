@@ -11,18 +11,29 @@ const tokens = {
 const users = {
   'admin-token': {
     roles: ['admin'],
-    introduction: 'I am a super administrator',
+    name: 'admin',
+    realName: '超级管理员',
+    className: '信息工程1班',
+    email: 'admin@example.com',
     avatar: 'https://userpic.codeforces.org/2502707/title/9d101ba1ff9298a2.jpg',
-    name: 'Super Admin'
+    introduction: '我是超级管理员',
+    luogu: 'admin_luogu',
+    codeforces: 'admin_cf',
+    poj: 'admin_poj'
   },
   'editor-token': {
     roles: ['editor'],
-    introduction: 'I am an editor',
+    name: 'editor',
+    realName: '普通编辑',
+    className: '信息工程2班',
+    email: 'editor@example.com',
     avatar: 'https://userpic.codeforces.org/2502707/title/9d101ba1ff9298a2.jpg',
-    name: 'Normal Editor'
+    introduction: '我是普通编辑',
+    luogu: 'editor_luogu',
+    codeforces: 'editor_cf',
+    poj: 'editor_poj'
   }
 }
-
 module.exports = [
   // user login
   {
@@ -49,7 +60,7 @@ module.exports = [
 
   // get user info
   {
-    url: '/vue-element-admin/user/info\.*',
+    url: '/vue-element-admin/user/info.*',
     type: 'get',
     response: config => {
       const { token } = config.query
