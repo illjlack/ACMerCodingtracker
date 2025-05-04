@@ -4,50 +4,67 @@
       <span>About me</span>
     </div>
 
+    <!-- 用户头像与基本信息 -->
     <div class="user-profile">
       <div class="box-center">
-        <pan-thumb :image="user.avatar" :height="'100px'" :width="'100px'" :hoverable="false">
-          <div>Hello</div>
-          {{ user.role }}
-        </pan-thumb>
+        <pan-thumb
+          :image="user.avatar"
+          height="100px"
+          width="100px"
+          :hoverable="false"
+        />
       </div>
       <div class="box-center">
-        <div class="user-name text-center">{{ user.name }}</div>
-        <div class="user-role text-center text-muted">{{ user.role | uppercaseFirst }}</div>
+        <div class="user-realname text-center">{{ user.realName }}</div>
+        <div class="user-username text-center text-muted">
+          ({{ user.name }})
+        </div>
+      </div>
+      <div class="box-center user-class text-center text-muted">
+        班级：{{ user.className }}
       </div>
     </div>
 
+    <!-- 联系方式 & 账号信息 -->
     <div class="user-bio">
-      <div class="user-education user-bio-section">
-        <div class="user-bio-section-header"><svg-icon icon-class="education" /><span>Education</span></div>
+
+      <div class="user-contact user-bio-section">
+        <div class="user-bio-section-header">
+          <svg-icon icon-class="email" />
+          <span>Contact</span>
+        </div>
         <div class="user-bio-section-body">
-          <div class="text-muted">
-            JS in Computer Science from the University of Technology
-          </div>
+          <p v-if="user.email"><strong>Email:</strong> {{ user.email }}</p>
         </div>
       </div>
 
-      <div class="user-skills user-bio-section">
-        <div class="user-bio-section-header"><svg-icon icon-class="skill" /><span>Skills</span></div>
+      <div class="user-accounts user-bio-section">
+        <div class="user-bio-section-header">
+          <svg-icon icon-class="link" />
+          <span>Accounts</span>
+        </div>
         <div class="user-bio-section-body">
-          <div class="progress-item">
-            <span>Vue</span>
-            <el-progress :percentage="70" />
-          </div>
-          <div class="progress-item">
-            <span>JavaScript</span>
-            <el-progress :percentage="18" />
-          </div>
-          <div class="progress-item">
-            <span>Css</span>
-            <el-progress :percentage="12" />
-          </div>
-          <div class="progress-item">
-            <span>ESLint</span>
-            <el-progress :percentage="100" status="success" />
-          </div>
+          <p v-if="user.luogu">
+            <a
+              :href="`https://www.luogu.com.cn/user/${user.luogu}`"
+              target="_blank"
+            >Luogu: {{ user.luogu }}</a>
+          </p>
+          <p v-if="user.codeforces">
+            <a
+              :href="`https://codeforces.com/profile/${user.codeforces}`"
+              target="_blank"
+            >Codeforces: {{ user.codeforces }}</a>
+          </p>
+          <p v-if="user.poj">
+            <a
+              :href="`https://poj.org/userstatus?user_id=${user.poj}`"
+              target="_blank"
+            >POJ: {{ user.poj }}</a>
+          </p>
         </div>
       </div>
+
     </div>
   </el-card>
 </template>
@@ -56,18 +73,22 @@
 import PanThumb from '@/components/PanThumb'
 
 export default {
+  name: 'UserCard',
   components: { PanThumb },
   props: {
     user: {
       type: Object,
-      default: () => {
-        return {
-          name: '',
-          email: '',
-          avatar: '',
-          role: ''
-        }
-      }
+      default: () => ({
+        name: '',
+        realName: '',
+        className: '',
+        email: '',
+        avatar: '',
+        role: '',
+        luogu: '',
+        codeforces: '',
+        poj: ''
+      })
     }
   }
 }
@@ -84,40 +105,21 @@ export default {
 }
 
 .user-profile {
-  .user-name {
+  .user-realname {
+    font-size: 18px;
     font-weight: bold;
   }
-
-  .box-center {
-    padding-top: 10px;
+  .user-username {
+    padding-top: 4px;
   }
-
-  .user-role {
-    padding-top: 10px;
-    font-weight: 400;
-    font-size: 14px;
-  }
-
-  .box-social {
-    padding-top: 30px;
-
-    .el-table {
-      border-top: 1px solid #dfe6ec;
-    }
-  }
-
-  .user-follow {
-    padding-top: 20px;
+  .user-class {
+    margin-top: 8px;
   }
 }
 
 .user-bio {
   margin-top: 20px;
   color: #606266;
-
-  span {
-    padding-left: 4px;
-  }
 
   .user-bio-section {
     font-size: 14px;
@@ -128,6 +130,19 @@ export default {
       padding-bottom: 10px;
       margin-bottom: 10px;
       font-weight: bold;
+      display: flex;
+      align-items: center;
+
+      svg-icon {
+        margin-right: 4px;
+      }
+    }
+    .user-bio-section-body {
+      padding-left: 4px;
+
+      p {
+        margin: 4px 0;
+      }
     }
   }
 }
