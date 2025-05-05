@@ -145,8 +145,7 @@ export const asyncRoutes = [
         meta: { title: '个人做题信息', icon: 'user', noCache: true, needDynamic: true, roles: ['admin', 'editor', 'user'] }
       }
     ]
-  },
-  { path: '*', redirect: '/404', hidden: true }
+  }
 ]
 
 const createRouter = () =>

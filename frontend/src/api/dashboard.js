@@ -36,3 +36,11 @@ export function fetchDailyPbStats(params) {
     params
   })
 }
+
+export function fetchUserProblemDetails(params) {
+  return request({
+    url: '/dashboard/user/problems',
+    method: 'get',
+    params
+  })
+}

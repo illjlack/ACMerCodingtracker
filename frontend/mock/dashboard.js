@@ -30,6 +30,16 @@ for (let i = 1; i <= 32; i++) {
   })
 }
 
+const problems = []
+for (let i = 0; i < 100; i++) {
+  problems.push({
+    problemId: Mock.mock('@integer(1000, 9999)'),
+    oj: Mock.mock('@pick(["HDU", "POJ", "Luogu", "Codeforces"])'),
+    submitTime: Mock.mock('@datetime'),
+    result: Mock.mock('@pick(["AC", "WA"])')
+  })
+}
+
 module.exports = [
   {
     url: '/dashboard/ranking',
@@ -65,9 +75,9 @@ module.exports = [
       // eslint-disable-next-line no-unused-vars
       const { username } = config.query // 这里改成 username
 
-      // 生成过去30天的假数据
+      // 生成过去300天的假数据
       const stats = []
-      for (let i = 30; i >= 0; i--) {
+      for (let i = 300; i >= 0; i--) {
         const d = new Date()
         d.setDate(d.getDate() - i)
         const dateStr = d.toISOString().slice(0, 10)
@@ -82,6 +92,19 @@ module.exports = [
       return {
         code: 20000,
         data: stats
+      }
+    }
+  },
+  {
+    url: '/dashboard/user/problems',
+    type: 'get',
+    response: config => {
+      const { username } = config.query
+      const userProblems = problems.filter(item => item.oj === username) // 模拟只返回用户特定数据
+
+      return {
+        code: 20000,
+        data: userProblems
       }
     }
   }

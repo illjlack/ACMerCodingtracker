@@ -11,34 +11,42 @@ import { fetchDailyPbStats } from '@/api/dashboard'
 export default {
   name: 'MixChart',
   mixins: [resize],
-  data() {
-    return {
-      chart: null,
-      // 默认从路由参数获取 username
-      username: this.$route.params.username
+  props: {
+    // 接收来自父组件的 name 作为 props
+    name: {
+      type: String,
+      required: true
     }
   },
   watch: {
-    // 监听路由 username 变化，重新加载数据
-    '$route.params.username': {
+    name: {
       immediate: true,
       handler(newName) {
-        this.username = newName
-        this.loadDailyPbStats()
+        if (this.chart) {
+          this.loadDailyPbStats(newName)
+        }
       }
     }
   },
   mounted() {
     this.chart = echarts.init(this.$refs.chartContainer, 'macarons')
-    this.onResize()
+    this.loadDailyPbStats(this.name) // 初始化完成后再加载一次
   },
   methods: {
-    async loadDailyPbStats() {
+    async loadDailyPbStats(name) {
+      if (!this.chart) {
+        console.warn('chart 未初始化，跳过加载')
+        return
+      }
+
       this.chart.clear()
       try {
-        // 传递 username 参数
-        const res = await fetchDailyPbStats({ username: this.username })
-        const stats = res.data // [{ date, acCount, waCount }, ...]
+        console.log(`正在加载用户: ${name} 的数据...`)
+        const res = await fetchDailyPbStats({ username: name })
+
+        console.log('返回的原始数据:', res)
+
+        const stats = res.data
         const dates = stats.map(item => item.date)
         const acData = stats.map(item => item.acCount)
         const waData = stats.map(item => item.waCount)
@@ -46,7 +54,7 @@ export default {
         this.chart.setOption({
           backgroundColor: '#344b58',
           title: {
-            text: `${this.username} 的每日做题情况`,
+            text: `${name} 的每日做题情况`,
             left: 'center',
             textStyle: { color: '#fff' }
           },
@@ -104,7 +112,7 @@ export default {
               stack: '总量',
               barMaxWidth: 35,
               data: acData,
-              itemStyle: { color: 'rgba(255,144,128,1)' }
+              itemStyle: { color: 'rgba(0,255,0,1)' } // 绿色
             },
             {
               name: 'WA数',
@@ -112,17 +120,12 @@ export default {
               stack: '总量',
               barMaxWidth: 35,
               data: waData,
-              itemStyle: { color: 'rgba(0,191,183,1)' }
+              itemStyle: { color: 'rgba(255,0,0,1)' } // 红色
             }
           ]
         })
       } catch (err) {
         console.error('加载每日做题数据失败', err)
-      }
-    },
-    onResize() {
-      if (this.chart) {
-        this.chart.resize()
       }
     }
   }
