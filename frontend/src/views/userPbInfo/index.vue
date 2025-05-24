@@ -9,40 +9,23 @@
     <!-- Contribution Calendar Section -->
     <el-row :gutter="32">
       <el-col :xs="24" :sm="24" :lg="12">
-        <div class="contribution-calendar-wrapper">
-          <contribution-calendar :name="name" />
-        </div>
-      </el-col>
-
-      <el-col :xs="24" :sm="24" :lg="12">
         <div class="chart-wrapper">
           <pie-chart />
         </div>
       </el-col>
     </el-row>
-
-    <!--    &lt;!&ndash; Pie Chart Section &ndash;&gt;-->
-    <!--    <el-row :gutter="32">-->
-    <!--      <el-col :xs="24" :sm="24" :lg="12">-->
-    <!--        <div class="chart-wrapper">-->
-    <!--          <pie-chart />-->
-    <!--        </div>-->
-    <!--      </el-col>-->
-    <!--    </el-row>-->
   </div>
 </template>
 
 <script>
 import LineChart from './components/LineChart.vue'
 import PieChart from './components/PieChart.vue'
-import ContributionCalendar from './components/contribution-calendar.vue'
 
 export default {
   name: 'DashboardAdmin',
   components: {
     LineChart,
-    PieChart,
-    ContributionCalendar
+    PieChart
   },
   props: {
     name: {

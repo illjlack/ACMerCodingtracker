@@ -27,10 +27,10 @@ export default {
     return {
       chart: null,
       ojData: { // 使用虚拟数据
-        luogu: 120,
-        codeforces: 150,
-        poj: 100,
-        other: 80
+
+        poj: 33,
+        luogu: 90,
+        codeforces: 153
       }
     }
   },

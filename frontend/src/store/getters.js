@@ -8,7 +8,6 @@ const getters = {
   visitedViews: state => state.tagsView.visitedViews,
   cachedViews: state => state.tagsView.cachedViews,
 
-  // user模块（新的user结构）
   token: state => state.user.token,
   name: state => state.user.user.name,
   realName: state => state.user.user.realName,

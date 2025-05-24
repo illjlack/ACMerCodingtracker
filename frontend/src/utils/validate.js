@@ -11,12 +11,23 @@ export function isExternal(path) {
 }
 
 /**
+ * 校验用户名：
+ * - 允许中文、英文字母、数字
+ * - 长度 2 到 20 之间
+ *
  * @param {string} str
- * @returns {Boolean}
+ * @returns {boolean}
  */
 export function validUsername(str) {
-  const valid_map = ['admin', 'editor']
-  return valid_map.indexOf(str.trim()) >= 0
+  const s = str.trim()
+  // 长度校验
+  if (s.length < 2 || s.length > 20) {
+    return false
+  }
+  // 只允许中文、英文、数字
+  // \u4e00-\u9fa5 是常用汉字 Unicode 区间
+  const re = /^[A-Za-z0-9\u4e00-\u9fa5]+$/
+  return re.test(s)
 }
 
 /**

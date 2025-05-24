@@ -49,7 +49,6 @@ export default {
         const stats = res.data
         const dates = stats.map(item => item.date)
         const acData = stats.map(item => item.acCount)
-        const waData = stats.map(item => item.waCount)
 
         this.chart.setOption({
           backgroundColor: '#344b58',
@@ -60,7 +59,7 @@ export default {
           },
           tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' }},
           legend: {
-            data: ['AC数', 'WA数'],
+            data: ['AC数'],
             top: 20,
             textStyle: { color: '#90979c' }
           },
@@ -113,14 +112,6 @@ export default {
               barMaxWidth: 35,
               data: acData,
               itemStyle: { color: 'rgba(0,255,0,1)' } // 绿色
-            },
-            {
-              name: 'WA数',
-              type: 'bar',
-              stack: '总量',
-              barMaxWidth: 35,
-              data: waData,
-              itemStyle: { color: 'rgba(255,0,0,1)' } // 红色
             }
           ]
         })

@@ -74,6 +74,7 @@
 
 <script>
 import PanThumb from '@/components/PanThumb'
+import defaultAvatar from '@/assets/default-avatar.png'
 
 export default {
   name: 'UserCard',
@@ -92,6 +93,11 @@ export default {
         codeforces: '',
         poj: ''
       })
+    }
+  },
+  data() {
+    return {
+      defaultAvatar // 默认头像图片路径
     }
   }
 }

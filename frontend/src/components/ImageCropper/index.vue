@@ -819,7 +819,6 @@ export default {
 </script>
 
 <style lang="scss">
-@charset "UTF-8";
 @-webkit-keyframes vicp_progress {
   0% {
     background-position-y: 0;
