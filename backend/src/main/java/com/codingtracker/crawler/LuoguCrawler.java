@@ -186,7 +186,11 @@ public class LuoguCrawler {
         List<UserTryProblem> tries = new ArrayList<>();
 
         // 5. 构建或更新题目信息，并准备尝试记录
-        for (JsonNode rec : allRecs) {
+        for (JsonNode rec : allRecs)
+        {
+            int status = rec.path("status").asInt();
+            ProblemResult result = LuoguProblemResultMapping.fromCode(status);
+
             String pid = rec.path("problem").path("pid").asText();
             String title = rec.path("problem").path("title").asText();
             long secs = rec.path("submitTime").asLong();
@@ -217,7 +221,7 @@ public class LuoguCrawler {
                     .user(user)
                     .extOjPbInfo(info)
                     .ojName(getOjType())
-                    .result(ProblemResult.AC)
+                    .result(result)
                     .attemptTime(attemptTime)
                     .build());
         }
@@ -249,5 +253,41 @@ public class LuoguCrawler {
             if (info != null) list.add(info);
         }
         return list;
+    }
+}
+
+
+class LuoguProblemResultMapping {
+
+    private static final Map<Integer, ProblemResult> codeToResult = new HashMap<>();
+    private static final Map<ProblemResult, Integer> resultToCode = new HashMap<>();
+
+    static {
+        codeToResult.put(12, ProblemResult.AC);
+        codeToResult.put(13, ProblemResult.WA);
+        codeToResult.put(14, ProblemResult.TLE);
+        codeToResult.put(15, ProblemResult.RE);
+        codeToResult.put(16, ProblemResult.CE);
+        codeToResult.put(17, ProblemResult.OLE);
+        codeToResult.put(18, ProblemResult.MLE);
+        codeToResult.put(19, ProblemResult.PE);
+        codeToResult.put(20, ProblemResult.SUBE);
+        codeToResult.put(21, ProblemResult.INQ);
+        codeToResult.put(22, ProblemResult.NOJ);
+        codeToResult.put(23, ProblemResult.RTL);
+        codeToResult.put(24, ProblemResult.REJ);
+        codeToResult.put(-1, ProblemResult.UNKNOWN);
+
+        for (Map.Entry<Integer, ProblemResult> entry : codeToResult.entrySet()) {
+            resultToCode.put(entry.getValue(), entry.getKey());
+        }
+    }
+
+    public static ProblemResult fromCode(int code) {
+        return codeToResult.getOrDefault(code, ProblemResult.UNKNOWN);
+    }
+
+    public static int toCode(ProblemResult result) {
+        return resultToCode.getOrDefault(result, -1);
     }
 }
