@@ -1,4 +1,4 @@
-import { login, logout, getInfo } from '@/api/user'
+import { login, logout, getInfo, updateUser, uploadAvatar } from '@/api/user'
 import { getToken, setToken, removeToken } from '@/utils/auth'
 import router, { resetRouter } from '@/router'
 
@@ -14,19 +14,6 @@ const state = {
     avatar: '', // 头像地址
     ojAccounts: {} // OJ 账号信息
   }
-}
-
-const getters = {
-  token: state => state.token,
-  name: state => state.user.name,
-  realName: state => state.user.realName,
-  className: state => state.user.className,
-  email: state => state.user.email,
-  avatar: state => state.user.avatar,
-  roles: state => state.user.roles,
-  luogu: state => (state.user.ojAccounts && state.user.ojAccounts.LUOGU) ? state.user.ojAccounts.LUOGU : '',
-  codeforces: state => (state.user.ojAccounts && state.user.ojAccounts.CODEFORCES) ? state.user.ojAccounts.CODEFORCES : '',
-  poj: state => (state.user.ojAccounts && state.user.ojAccounts.POJ) ? state.user.ojAccounts.POJ : ''
 }
 
 // 同步修改状态的方法
@@ -167,6 +154,36 @@ const actions = {
     })
   },
 
+  modifyUser({ commit }, updatedUserInfo) {
+    console.log('action modifyUser 被调用')
+    return new Promise((resolve, reject) => {
+      updateUser(updatedUserInfo).then(response => {
+        if (response.success) {
+          // 更新 Vuex 中用户信息
+          commit('SET_USER_INFO', updatedUserInfo)
+          resolve(response)
+        } else {
+          reject(new Error(response.message || '更新失败'))
+        }
+      }).catch(error => {
+        reject(error)
+      })
+    })
+  },
+
+  uploadAvatar({ commit }, file) {
+    const formData = new FormData()
+    formData.append('avatar', file)
+
+    return uploadAvatar(formData).then(res => {
+      if (res.success && res.data && res.data.url) {
+        commit('SET_USER_INFO', { avatar: res.data.url })
+        return res.data.url
+      }
+      return Promise.reject(new Error(res.message || '头像上传失败'))
+    })
+  },
+
   // 动态切换角色（测试用）
   async changeRoles({ commit, dispatch }, role) {
     console.log('action changeRoles 被调用，目标角色：', role)
@@ -193,6 +210,5 @@ export default {
   namespaced: true,
   state,
   mutations,
-  actions,
-  getters
+  actions
 }

@@ -8,10 +8,11 @@
     <div class="user-profile">
       <div class="box-center">
         <pan-thumb
-          :image="user.avatar"
+          :image="avatarUrl"
           height="100px"
           width="100px"
           :hoverable="false"
+          @error="onAvatarError"
         >
           <div>Hello</div>
           {{ user.role }}
@@ -30,7 +31,6 @@
 
     <!-- 联系方式 & 账号信息 -->
     <div class="user-bio">
-
       <div class="user-contact user-bio-section">
         <div class="user-bio-section-header">
           <svg-icon icon-class="email" />
@@ -67,7 +67,6 @@
           </p>
         </div>
       </div>
-
     </div>
   </el-card>
 </template>
@@ -97,7 +96,24 @@ export default {
   },
   data() {
     return {
-      defaultAvatar // 默认头像图片路径
+      defaultAvatar,
+      avatarError: false
+    }
+  },
+  computed: {
+    baseApiUrl() {
+      return process.env.VUE_APP_BASE_API || 'http://localhost:8080'
+    },
+    avatarUrl() {
+      const avatar = this.user.avatar
+      if (!avatar || this.avatarError) return this.defaultAvatar
+      if (avatar.startsWith('http')) return avatar
+      return this.baseApiUrl + avatar
+    }
+  },
+  methods: {
+    onAvatarError() {
+      this.avatarError = true
     }
   }
 }
@@ -146,6 +162,7 @@ export default {
         margin-right: 4px;
       }
     }
+
     .user-bio-section-body {
       padding-left: 4px;
 

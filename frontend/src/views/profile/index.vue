@@ -80,14 +80,35 @@ export default {
     },
     // 处理子组件 Account 更新事件，调用 Vuex action 同步更新数据
     async onUserUpdate(updatedUser) {
+      // 辅助函数：将账号字符串拆分、去空、用中文分号拼接
+      function normalizeAccounts(accountStr) {
+        if (!accountStr) return ''
+        // 支持英文分号 ; 或中文分号 ；
+        const parts = accountStr.split(/;|；/).map(s => s.trim()).filter(s => s.length > 0)
+        return parts.join(';')
+      }
       try {
-        // 这里的 modifyUser 需要你自己在 Vuex 实现，负责调用接口并更新用户信息
-        await this.modifyUser(updatedUser)
+        const payload = {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          realName: updatedUser.realName,
+          major: updatedUser.className,
+          email: updatedUser.email,
+          avatar: updatedUser.avatar,
+          ojAccounts: {
+            LUOGU: normalizeAccounts(updatedUser.luogu),
+            CODEFORCES: normalizeAccounts(updatedUser.codeforces),
+            POJ: normalizeAccounts(updatedUser.poj)
+          }
+        }
+
+        await this.modifyUser(payload)
         this.$message.success('用户信息已更新')
       } catch (err) {
         this.$message.error('更新用户信息失败')
       }
     }
+
   }
 }
 </script>

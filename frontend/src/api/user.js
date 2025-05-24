@@ -27,10 +27,17 @@ export function register(data) {
 }
 
 /**
- * 修改用户信息
- * @param {{ id?: number, username?: string, realName?: string, major?: string, email?: string, avatar?: string }} data
+ * 更新用户信息接口
+ * @param {Object} data 用户信息对象
+ * @param {number} [data.id] 用户ID（可选）
+ * @param {string} [data.name] 用户名（username）（可选）
+ * @param {string} [data.realName] 真实姓名（可选）
+ * @param {string} [data.major] 专业（可选）
+ * @param {string} [data.email] 邮箱（可选）
+ * @param {string} [data.avatar] 头像URL或Base64字符串（可选）
+ * @param {Object} [data.ojAccounts] OJ账号信息，键为平台名，值为账号字符串（可选）
  */
-export function modifyUser(data) {
+export function updateUser(data) {
   return request({
     url: '/api/auth/modify',
     method: 'put',
@@ -54,6 +61,21 @@ export function getInfo(token) {
   return request({
     url: '/api/auth/userInfo',
     method: 'get'
+  })
+}
+
+/**
+ * 上传头像
+ * @param {FormData} formData 包含文件的 FormData 对象，字段名为 'avatar'
+ */
+export function uploadAvatar(formData) {
+  return request({
+    url: '/api/auth/upload-avatar',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data' // 必须指定
+    }
   })
 }
 

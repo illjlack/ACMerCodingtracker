@@ -1,6 +1,8 @@
 import axios from 'axios'
 import { Message } from 'element-ui'
 import { getToken } from '@/utils/auth'
+import store from '@/store'
+import router from '@/router'
 
 // 创建 axios 实例
 const service = axios.create({
@@ -50,11 +52,29 @@ service.interceptors.response.use(
   error => {
     // HTTP 层面错误（网络错误、超时、5xx 等）
     console.error('Response Error: ', error)
-    Message({
-      message: error.message,
-      type: 'error',
-      duration: 5 * 1000
-    })
+
+    // 如果是 403，认为是登录过期
+    if (error.response && error.response.status === 403) {
+      Message({
+        message: '登录已过期，请重新登录',
+        type: 'warning',
+        duration: 3000
+      })
+
+      // 清空用户信息，重置 token
+      store.dispatch('user/resetToken').then(() => {
+        // 跳转到登录页，带上当前路径方便登录后重定向
+        router.push(`/login?redirect=${router.currentRoute.fullPath}`)
+      })
+    } else {
+      // 其他错误提示
+      Message({
+        message: error.message,
+        type: 'error',
+        duration: 5 * 1000
+      })
+    }
+
     return Promise.reject(error)
   }
 )

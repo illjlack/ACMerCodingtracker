@@ -8,45 +8,48 @@
         :before-upload="beforeAvatarUpload"
       >
         <img
-          v-if="user.avatar"
-          :src="user.avatar"
+          :src="avatarUrl"
           class="avatar"
+          @error="onAvatarError"
         >
-        <i
-          v-else
-          class="el-icon-plus avatar-uploader-icon"
-        />
       </el-upload>
     </el-form-item>
 
-    <!-- 登录名 -->
+    <!-- 用户名（不可修改） -->
     <el-form-item label="用户名">
-      <el-input v-model.trim="user.name" />
+      <el-input v-model.trim="localUser.name" disabled />
     </el-form-item>
+
     <!-- 真实姓名 -->
     <el-form-item label="真实姓名">
-      <el-input v-model.trim="user.realName" />
+      <el-input v-model.trim="localUser.realName" />
     </el-form-item>
+
     <!-- 班级 -->
     <el-form-item label="班级">
-      <el-input v-model.trim="user.className" />
+      <el-input v-model.trim="localUser.className" />
     </el-form-item>
+
     <!-- 邮箱 -->
     <el-form-item label="Email">
-      <el-input v-model.trim="user.email" />
+      <el-input v-model.trim="localUser.email" />
     </el-form-item>
+
     <!-- Luogu 账号 -->
     <el-form-item label="Luogu 账号(多个账号用;隔开)">
-      <el-input v-model.trim="user.luogu" placeholder="例如：tourist" />
+      <el-input v-model.trim="localUser.luogu" placeholder="例如：tourist" />
     </el-form-item>
+
     <!-- Codeforces 账号 -->
     <el-form-item label="Codeforces 账号(多个账号用;隔开)">
-      <el-input v-model.trim="user.codeforces" placeholder="例如：Benq" />
+      <el-input v-model.trim="localUser.codeforces" placeholder="例如：Benq" />
     </el-form-item>
+
     <!-- POJ 账号 -->
     <el-form-item label="POJ 账号(多个账号用;隔开)">
-      <el-input v-model.trim="user.poj" placeholder="例如：123456" />
+      <el-input v-model.trim="localUser.poj" placeholder="例如：123456" />
     </el-form-item>
+
     <!-- 提交按钮 -->
     <el-form-item>
       <el-button type="primary" @click="submit">更新信息</el-button>
@@ -55,62 +58,79 @@
 </template>
 
 <script>
+import defaultAvatar from '@/assets/default-avatar.png'
+
 export default {
-  name: 'Account', // 组件名称
+  name: 'Account',
   props: {
     user: {
       type: Object,
       default: () => ({
-        name: '', // 登录名
-        email: '', // 邮箱
-        realName: '', // 真实姓名
-        className: '', // 班级
-        avatar: '', // 头像 URL/Base64
-        luogu: '', // Luogu 账号
-        codeforces: '', // Codeforces 账号
-        poj: '' // POJ 账号
+        name: '',
+        email: '',
+        realName: '',
+        className: '',
+        avatar: '',
+        luogu: '',
+        codeforces: '',
+        poj: ''
       })
     }
   },
+  data() {
+    return {
+      localUser: { ...this.user },
+      defaultAvatar,
+      avatarError: false // 标志是否需要使用默认头像
+    }
+  },
+  computed: {
+    baseApiUrl() {
+      return process.env.VUE_APP_BASE_API || 'http://localhost:8080'
+    },
+    avatarUrl() {
+      const avatar = this.localUser.avatar
+      if (!avatar || this.avatarError) return this.defaultAvatar
+      if (avatar.startsWith('http')) return avatar
+      return this.baseApiUrl + avatar
+    }
+  },
   methods: {
-    /**
-     * 在选择头像文件后，读取为 Base64 并赋值给 user.avatar
-     * @param {File} file
-     * @returns {Boolean} 返回 false 阻止 el-upload 自动上传
-     */
+    onAvatarError() {
+      this.avatarError = true
+    },
     beforeAvatarUpload(file) {
-      // 只允许图片格式
       const isImage = file.type.startsWith('image/')
       if (!isImage) {
         this.$message.error('上传头像只能是图片文件')
         return false
       }
-      // 最大 2MB
+
       const isLt2M = file.size / 1024 / 1024 < 2
       if (!isLt2M) {
-        this.$message.error('图片大小不能超过 2MB')
+        this.$message.error('图片大小不能超过 2 MB')
         return false
       }
-      // 读取为 Base64
-      const reader = new FileReader()
-      reader.onload = e => {
-        this.user.avatar = e.target.result
-        // 可选：立即通知父组件更新
-        this.$emit('update', this.user)
-      }
-      reader.readAsDataURL(file)
-      // 阻止 el-upload 自动提交
+
+      this.$store.dispatch('user/uploadAvatar', file)
+        .then(url => {
+          this.localUser.avatar = url
+          this.avatarError = false // 重置错误标志
+          this.$message.success('头像上传成功')
+        })
+        .catch(() => {
+          this.$message.error('头像上传失败')
+        })
+
       return false
     },
     submit() {
-      // 模拟更新成功提示，实际可调用 API 保存 user 对象
+      this.$emit('update', { ...this.localUser })
       this.$message({
         message: '用户信息已更新成功',
         type: 'success',
         duration: 5000
       })
-      // 将最新的 user 数据传递给父组件
-      this.$emit('update', this.user)
     }
   }
 }
