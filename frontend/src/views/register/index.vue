@@ -1,10 +1,10 @@
 <template>
-  <div class="acmer-login-container">
+  <div class="acmer-register-container">
     <el-form
-      ref="loginForm"
-      :model="loginForm"
-      :rules="loginRules"
-      class="login-form"
+      ref="registerForm"
+      :model="registerForm"
+      :rules="registerRules"
+      class="register-form"
       autocomplete="on"
       label-position="left"
     >
@@ -12,7 +12,7 @@
       <div class="title-container">
         <h3 class="title">
           ACMerCodingtracker<br>
-          登录
+          注册
         </h3>
       </div>
 
@@ -23,7 +23,7 @@
         </span>
         <el-input
           ref="username"
-          v-model="loginForm.username"
+          v-model="registerForm.username"
           placeholder="请输入 ACMer 用户名"
           name="username"
           type="text"
@@ -46,15 +46,15 @@
           <el-input
             :key="passwordType"
             ref="password"
-            v-model="loginForm.password"
+            v-model="registerForm.password"
             :type="passwordType"
             placeholder="请输入密码"
             name="password"
             tabindex="2"
-            autocomplete="current-password"
+            autocomplete="new-password"
             @keyup.native="checkCapslock"
             @blur="capsTooltip = false"
-            @keyup.enter.native="handleLogin"
+            @keyup.enter.native="handleRegister"
           />
           <span class="show-pwd" @click="togglePasswordVisibility">
             <svg-icon
@@ -64,23 +64,23 @@
         </el-form-item>
       </el-tooltip>
 
-      <!-- 登录按钮 -->
+      <!-- 注册按钮 -->
       <el-button
         :loading="loading"
         type="primary"
         style="width: 100%; margin-bottom: 10px;"
-        @click.native.prevent="handleLogin"
+        @click.native.prevent="handleRegister"
       >
-        登录
+        注册
       </el-button>
 
-      <!-- 注册按钮 -->
+      <!-- 返回登录按钮 -->
       <el-button
         type="text"
         style="width: 100%;"
-        @click="goRegister"
+        @click="goLogin"
       >
-        还没有账号？去注册
+        已有账号？去登录
       </el-button>
     </el-form>
   </div>
@@ -88,9 +88,10 @@
 
 <script>
 import { validUsername } from '@/utils/validate'
+import { register } from '@/api/user' // 路径根据项目调整
 
 export default {
-  name: 'ACMerLogin',
+  name: 'ACMerRegister',
   data() {
     const validateUsername = (rule, value, callback) => {
       if (!validUsername(value)) {
@@ -108,35 +109,23 @@ export default {
     }
 
     return {
-      loginForm: {
+      registerForm: {
         username: '',
         password: ''
       },
-      loginRules: {
+      registerRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
         password: [{ required: true, trigger: 'blur', validator: validatePassword }]
       },
       passwordType: 'password',
       capsTooltip: false,
-      loading: false,
-      redirect: null,
-      otherQuery: {}
-    }
-  },
-  watch: {
-    $route: {
-      handler(route) {
-        const { redirect, ...rest } = route.query
-        this.redirect = redirect
-        this.otherQuery = rest
-      },
-      immediate: true
+      loading: false
     }
   },
   mounted() {
-    if (!this.loginForm.username) {
+    if (!this.registerForm.username) {
       this.$refs.username.focus()
-    } else if (!this.loginForm.password) {
+    } else if (!this.registerForm.password) {
       this.$refs.password.focus()
     }
   },
@@ -151,34 +140,34 @@ export default {
         this.$refs.password.focus()
       })
     },
-    handleLogin() {
-      this.$refs.loginForm.validate(valid => {
+    async handleRegister() {
+      this.$refs.registerForm.validate(async valid => {
         if (!valid) return
 
         this.loading = true
-        this.$store
-          .dispatch('user/login', this.loginForm)
-          .then(() => {
-            this.$router.push({
-              path: this.redirect || '/',
-              query: this.otherQuery
-            })
+        try {
+          await register({
+            username: this.registerForm.username,
+            password: this.registerForm.password
           })
-          .finally(() => {
-            this.loading = false
-          })
+          this.$message.success('注册成功，请登录')
+          this.goLogin()
+        } catch (error) {
+          this.$message.error(error.response?.data?.message || '注册失败，请重试')
+        } finally {
+          this.loading = false
+        }
       })
     },
-    goRegister() {
-      this.$router.push('/register')
+    goLogin() {
+      this.$router.push('/login')
     }
   }
 }
 </script>
 
 <style lang="scss" scoped>
-/* （保持之前你写的样式不变） */
-.acmer-login-container {
+.acmer-register-container {
   min-height: 100vh;
   background-color: #2d3a4b;
   display: flex;
@@ -186,7 +175,7 @@ export default {
   justify-content: center;
   padding: 20px;
 
-  .login-form {
+  .register-form {
     width: 400px;
     padding: 40px 30px;
     background: #1f2d3d;

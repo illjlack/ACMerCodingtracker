@@ -1,5 +1,5 @@
 
-// mock/dashboard.js
+// mock/usertry.js
 const Mock = require('mockjs')
 
 // 生成假数据列表：各平台题数随机，再计算总题数与评分（与总题数正相关），每三人一队

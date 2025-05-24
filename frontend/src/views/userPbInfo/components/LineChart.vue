@@ -6,7 +6,7 @@
 import echarts from 'echarts'
 import 'echarts/theme/macarons'
 import resize from './mixins/resize'
-import { fetchDailyPbStats } from '@/api/dashboard'
+import { fetchDailyPbStats } from '@/api/usertry'
 
 export default {
   name: 'MixChart',

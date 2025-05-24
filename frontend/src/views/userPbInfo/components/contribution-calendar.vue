@@ -6,7 +6,7 @@
 
 <script>
 import ContributionCalendar from 'vue-contribution-calendar'
-import { fetchDailyPbStats } from '@/api/dashboard'
+import { fetchDailyPbStats } from '@/api/usertry'
 
 export default {
   components: {
