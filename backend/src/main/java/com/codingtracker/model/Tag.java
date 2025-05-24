@@ -30,7 +30,7 @@ public class Tag implements Serializable {
     private String name;
 
     /** 反向关联到题目 */
-    @ManyToMany(mappedBy = "tags", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "tags")
     @JsonIgnore
     private Set<ExtOjPbInfo> problems = new HashSet<>();
 

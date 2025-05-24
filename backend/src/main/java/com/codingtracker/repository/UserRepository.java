@@ -1,6 +1,7 @@
 package com.codingtracker.repository;
 
 import com.codingtracker.model.User;
+import com.codingtracker.model.UserOJ;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

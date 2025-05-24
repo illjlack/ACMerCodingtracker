@@ -3,6 +3,7 @@ package com.codingtracker.crawler;
 import com.codingtracker.model.*;
 import com.codingtracker.repository.ExtOjLinkRepository;
 import com.codingtracker.repository.ExtOjPbInfoRepository;
+import com.codingtracker.repository.ProblemTagRepository;
 import com.codingtracker.repository.TagRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,7 +12,6 @@ import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -43,6 +43,8 @@ public class CFCrawler {
     @Autowired
     private ExtOjLinkRepository extOjLinkRepository;
 
+    @Autowired
+    private ProblemTagRepository problemTagRepository;
     public OJPlatform getOjType() {
         return OJPlatform.CODEFORCES;
     }
@@ -184,7 +186,6 @@ public class CFCrawler {
                             .build();
                 })
                 .toList();
-        extOjPbInfoRepository.saveAll(newInfos);
         newInfos.forEach(e -> infosMap.put(e.getPid(), e));
 
         // 6. 批量插入缺失标签
@@ -192,27 +193,33 @@ public class CFCrawler {
                 .filter(name -> !tagsMap.containsKey(name))
                 .map(Tag::new)
                 .toList();
-        tagRepository.saveAll(newTags);
         newTags.forEach(t -> tagsMap.put(t.getName(), t));
 
-        // 7. 同步题目-标签关系：查询带 tags 实体，再差集更新
+        // 保存获得主键
+        extOjPbInfoRepository.saveAll(newInfos);
+        tagRepository.saveAll(newTags);
+        // 7. 同步题目-标签关系，构建批量插入数据结构
+        // 重新查询所有题目和标签，确保都是持久化对象且有ID
         List<ExtOjPbInfo> allInfos = extOjPbInfoRepository.findByOjNameAndPidInWithTags(getOjType(), allPids);
+        List<Tag> allTags = tagRepository.findByNameIn(allTagNames);
+
+        // 构建映射和problemTagsMap
+        Map<String, Tag> tagNameToTag = allTags.stream()
+                .collect(Collectors.toMap(Tag::getName, Function.identity()));
+
+        Map<Long, Set<Long>> problemTagsMap = new HashMap<>();
         for (ExtOjPbInfo info : allInfos) {
-            String pid = info.getPid();
-            Set<String> desired = pidToTags.getOrDefault(pid, Collections.emptySet());
-            Set<Tag> current = info.getTags();
-            Set<String> currentNames = current.stream().map(Tag::getName).collect(Collectors.toSet());
-            // 计算差集
-            Set<String> toAdd = new HashSet<>(desired);
-            toAdd.removeAll(currentNames);
-            Set<String> toRemove = new HashSet<>(currentNames);
-            toRemove.removeAll(desired);
-            // 删除多余
-            current.removeIf(t -> toRemove.contains(t.getName()));
-            // 新增缺失
-            toAdd.forEach(name -> current.add(tagsMap.get(name)));
+            Set<String> desiredTagNames = pidToTags.getOrDefault(info.getPid(), Collections.emptySet());
+            Set<Long> tagIds = desiredTagNames.stream()
+                    .map(tagNameToTag::get)
+                    .filter(Objects::nonNull)
+                    .map(Tag::getId)
+                    .collect(Collectors.toSet());
+            problemTagsMap.put(info.getId(), tagIds);
         }
-        extOjPbInfoRepository.saveAll(allInfos);
+
+        // 调用批量插入，处理关联关系
+        problemTagRepository.batchInsertProblemTags(problemTagsMap);
 
         // 8. 构造并保存尝试记录
         List<UserTryProblem> tries = submissions.stream().map(sub -> {

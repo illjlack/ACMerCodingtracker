@@ -323,4 +323,8 @@ public class UserService {
         long tryCount = statsLoader.getSumTryCount();
         statsLoader.updateStats(userCount, problemCount, tryCount);
     }
+
+    public Optional<User> findByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
 }

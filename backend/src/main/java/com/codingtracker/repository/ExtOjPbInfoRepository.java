@@ -3,6 +3,8 @@ package com.codingtracker.repository;
 import com.codingtracker.model.ExtOjPbInfo;
 import com.codingtracker.model.OJPlatform;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -30,5 +32,7 @@ public interface ExtOjPbInfoRepository extends JpaRepository<ExtOjPbInfo, Long> 
 
     List<ExtOjPbInfo> findByOjNameAndPidIn(OJPlatform ojType, Set<String> allPids);
 
-    List<ExtOjPbInfo> findByOjNameAndPidInWithTags(OJPlatform ojType, Set<String> allPids);
+    @Query("select distinct p from ExtOjPbInfo p left join fetch p.tags where p.ojName = :ojName and p.pid in :pids")
+    List<ExtOjPbInfo> findByOjNameAndPidInWithTags(@Param("ojName") OJPlatform ojName, @Param("pids") Set<String> pids);
+
 }

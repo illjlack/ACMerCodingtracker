@@ -98,6 +98,11 @@
 			<version>2.11.0</version>
 		</dependency>
 
+		<!-- 邮箱 -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
 
 		<!-- JWT相关库，用于生成和解析JWT -->
 		<dependency>

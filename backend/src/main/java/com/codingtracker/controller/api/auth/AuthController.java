@@ -5,12 +5,15 @@ import com.codingtracker.dto.ApiResponse;
 import com.codingtracker.dto.UserInfoDTO;
 import com.codingtracker.model.User;
 import com.codingtracker.repository.UserRepository;
+import com.codingtracker.service.TokenBlacklistCache;
 import com.codingtracker.service.UserService;
 import com.codingtracker.util.JwtUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,10 +30,12 @@ public class AuthController {
     private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private final UserService userService;
     private final UserRepository userRepository;
+    private final TokenBlacklistCache tokenBlacklistCache;
 
-    public AuthController(UserService userService, UserRepository userRepository) {
+    public AuthController(UserService userService, UserRepository userRepository, TokenBlacklistCache tokenBlacklistCache) {
         this.userService = userService;
         this.userRepository = userRepository;
+        this.tokenBlacklistCache = tokenBlacklistCache;
     }
 
     // 用户登录并返回 token
@@ -124,13 +129,18 @@ public class AuthController {
 
     // 用户登出
     @PostMapping("/logout")
-    public ApiResponse<Void> logout() {
+    public ApiResponse<Void> logout(HttpServletRequest request) {
         String username = SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         logger.info("用户登出: 用户名={}", username);
 
-        // 此处可执行其它登出清理操作
-
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            // 将 token 加入黑名单缓存，标记为失效
+            tokenBlacklistCache.blacklistToken(token);
+            logger.info("将用户 {} 的 token 加入黑名单", username);
+        }
         return ApiResponse.ok("登出成功", null);
     }
 

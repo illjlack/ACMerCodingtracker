@@ -32,6 +32,7 @@ public class SystemStatsLoader {
         File file = Paths.get(STATS_FILE).toFile();
         if (file.exists()) {
             try {
+                // 读取文件并解析 JSON 数据
                 ObjectNode root = (ObjectNode) objectMapper.readTree(file);
                 userCount = root.path("userCount").asLong(0);
                 sumProblemCount = root.path("sumProblemCount").asLong(0);
@@ -51,6 +52,7 @@ public class SystemStatsLoader {
     }
 
     private void initDefaults() {
+        // 初始化默认统计数据
         userCount = 0L;
         sumProblemCount = 0L;
         sumTryCount = 0L;
@@ -93,6 +95,7 @@ public class SystemStatsLoader {
 
         try {
             File file = Paths.get(STATS_FILE).toFile();
+            // 写入文件并格式化输出
             objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, root);
             logger.info("系统统计数据写入文件成功");
         } catch (IOException e) {
