@@ -41,6 +41,11 @@ export const constantRoutes = [
     component: () => import('@/views/register/index'),
     hidden: true
   },
+  {
+    path: '/forgot-password',
+    component: () => import('@/views/forgot-password/index'),
+    hidden: true
+  },
   // 授权重定向
   {
     path: '/auth-redirect',

@@ -9,7 +9,7 @@ import getPageTitle from '@/utils/get-page-title' // 页面标题处理函数
 NProgress.configure({ showSpinner: false }) // 配置进度条，不显示旋转加载图标
 
 // 定义白名单，不需要登录即可访问的路由路径
-const whiteList = ['/login', '/auth-redirect', '/register']
+const whiteList = ['/login', '/auth-redirect', '/register', '/forgot-password']
 
 // 路由全局前置守卫
 router.beforeEach(async(to, from, next) => {

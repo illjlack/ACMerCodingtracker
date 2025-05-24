@@ -79,6 +79,25 @@ export function uploadAvatar(formData) {
   })
 }
 
+export function sendEmailCode(data) {
+  // data: { email: string }
+  return request({
+    url: '/api/email/sendCode',
+    method: 'post',
+    params: data // 发送查询参数 ?email=xxx
+  })
+}
+
+// 通过邮箱验证码修改密码
+export function resetPasswordByEmail(data) {
+  // data: { username: string, email: string, code: string, newPassword: string }
+  return request({
+    url: '/api/email/modifyPassword',
+    method: 'put',
+    params: data
+  })
+}
+
 export function logout() {
   return request({
     url: '/api/auth/logout',

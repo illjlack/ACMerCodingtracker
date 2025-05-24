@@ -74,14 +74,24 @@
         登录
       </el-button>
 
-      <!-- 注册按钮 -->
-      <el-button
-        type="text"
-        style="width: 100%;"
-        @click="goRegister"
-      >
-        还没有账号？去注册
-      </el-button>
+      <div style="display: flex; justify-content: space-between; margin-top: 10px;">
+        <el-button
+          type="text"
+          style="width: 48%; padding: 0;"
+          @click="goRegister"
+        >
+          还没有账号？去注册
+        </el-button>
+
+        <el-button
+          type="text"
+          style="width: 48%; padding: 0;"
+          @click="goForgotPassword"
+        >
+          忘记密码？
+        </el-button>
+      </div>
+
     </el-form>
   </div>
 </template>
@@ -171,6 +181,9 @@ export default {
     },
     goRegister() {
       this.$router.push('/register')
+    },
+    goForgotPassword() {
+      this.$router.push('/forgot-password')
     }
   }
 }

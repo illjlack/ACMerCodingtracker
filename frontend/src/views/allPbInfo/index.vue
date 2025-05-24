@@ -252,11 +252,11 @@ export default {
       this.updating = true
       try {
         await manualRebuild()
-        this.$message.success('手动更新成功')
+        this.$message.success('开始更新,需要一段时间')
         await this.fetchLastUpdateTime()
         this.fetchData()
       } catch (error) {
-        this.$message.error(error.response?.data?.message || '手动更新失败')
+        this.$message.error(error.response?.data?.message || '更新失败')
       } finally {
         this.updating = false
       }
