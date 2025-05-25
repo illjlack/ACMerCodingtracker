@@ -13,8 +13,10 @@ services:
       MYSQL_DATABASE: codingtracker
       MYSQL_USER: tracker_user
       MYSQL_PASSWORD: tracker_pass
+    ports:
+      - "3306:3306"  # 修改端口映射为 MySQL 默认端口
     volumes:
-      - ./mysql-data:/var/lib/mysql
+      - ./mysql-data:/var/lib/mysql  # 保证目录存在，并且权限正确
     command: --default-authentication-plugin=mysql_native_password
 
   # =====================
@@ -29,8 +31,9 @@ services:
     depends_on:
       - mysql
     ports:
-      - "9090:8080"  # 将容器的8080端口映射到宿主机的9090端口
+      - "9090:8080"
     environment:
+      TZ: Asia/Shanghai
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/codingtracker?useSSL=false&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: tracker_user
       SPRING_DATASOURCE_PASSWORD: tracker_pass
@@ -45,13 +48,28 @@ services:
     container_name: coding-frontend
     restart: always
     ports:
-      - "411:80"
+      - "80:80"
     depends_on:
       - backend
-    environment:
-      VUE_APP_BASE_API: http://119.45.10.196:9090  # 生产环境需要替换为实际服务器的 IP 地址或域名
-      ENV: production  # 可根据需要设置的其他环境变量
 
 volumes:
   mysql_data:
     driver: local
+
+# mysql被墙
+# 本地拉：docker pull mysql:8.0
+# 保存：docker save mysql:8.0 -o mysql_8.0.tar
+# 传到服务器：scp mysql_8.0.tar server:/root/
+# 加载：docker load -i /root/mysql_8.0.tar
+# 验证：docker images
+# 运行：docker-compose up --build -d
+
+
+# emmm,其它的也要，网上找一个最新的镜像才是王道
+
+# 重启要rm -rf ./mysql-data/* 删除数据的卷，不然就不挂载，虽然我是怕数据掉
+# 好像不是，唉
+# docker-compose down -v  # 停止并删除容器和卷
+# docker volume ls  # 检查卷是否仍然存在
+# docker volume prune  # 删除未使用的卷
+# docker-compose up --build  # 重新构建并启动所有服务
