@@ -57,7 +57,9 @@ export default {
       roles: 'roles',
       luogu: 'luogu',
       codeforces: 'codeforces',
-      poj: 'poj'
+      poj: 'poj',
+      unknown: 'unknown',
+      hdu: 'hdu' // 新增 HDU 字段
     }),
     user() {
       return {
@@ -69,7 +71,9 @@ export default {
         role: this.roles.join(' | '),
         luogu: this.luogu,
         codeforces: this.codeforces,
-        poj: this.poj
+        poj: this.poj,
+        unknown: this.unknown, // 新增 unknownOj 字段
+        hdu: this.hdu // 新增 HDU 字段
       }
     },
     userExists() {
@@ -114,7 +118,9 @@ export default {
           ojAccounts: {
             LUOGU: normalizeAccounts(updatedUser.luogu),
             CODEFORCES: normalizeAccounts(updatedUser.codeforces),
-            POJ: normalizeAccounts(updatedUser.poj)
+            POJ: normalizeAccounts(updatedUser.poj),
+            UNKNOWN: normalizeAccounts(updatedUser.unknown),
+            HDU: normalizeAccounts(updatedUser.hdu) // 新增 HDU 字段
           }
         }
         await this.modifyUser(payload)

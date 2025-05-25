@@ -70,7 +70,7 @@
         :default-sort="{ prop: 'acCount', order: 'descending' }"
         fit
       >
-        <el-table-column type="index" label="排名" min-width="60" />
+        <el-table-column type="index" label="序号" min-width="60" />
 
         <el-table-column label="用户名" min-width="120">
           <template #default="{ row }">
@@ -82,7 +82,7 @@
 
         <el-table-column prop="realName" label="真实姓名" min-width="120" />
 
-        <el-table-column label="总数(AC / 尝试)" sortable min-width="120">
+        <el-table-column label="总数(AC / 尝试)" min-width="120" :sortable="true" :sort-method="sortNumber">
           <template #default="{ row }">
             {{ row.acCount }} / {{ row.tryCount }}
           </template>
@@ -93,6 +93,8 @@
           :key="platform"
           :label="platform"
           min-width="100"
+          :sortable="true"
+          :sort-method="sortNumber"
         >
           <template #default="{ row }">
             {{ (row.acCounts[platform] || 0) + ' / ' + (row.tryCounts[platform] || 0) }}
@@ -171,15 +173,12 @@ export default {
 
       this.loading = true
       try {
-        const [acRes, tryRes] = await Promise.all([
-          fetchAcCounts(params),
-          fetchTryCounts(params)
-        ])
+        const [acRes, tryRes] = await Promise.all([fetchAcCounts(params), fetchTryCounts(params)])
 
         this.userStatsMap = {}
 
         ;(acRes.data || []).forEach(u => {
-          const acCount = Object.values(u.counts || {}).reduce((sum, val) => sum + val, 0)
+          const acCount = Object.values(u.counts || {}).reduce((sum, val) => sum + (parseInt(val) || 0), 0)
           this.userStatsMap[u.userId] = {
             userId: u.userId,
             username: u.username,
@@ -191,7 +190,7 @@ export default {
           }
         })
         ;(tryRes.data || []).forEach(u => {
-          const tryCount = Object.values(u.counts || {}).reduce((sum, val) => sum + val, 0)
+          const tryCount = Object.values(u.counts || {}).reduce((sum, val) => sum + (parseInt(val) || 0), 0)
           if (this.userStatsMap[u.userId]) {
             this.userStatsMap[u.userId].tryCount = tryCount
             this.userStatsMap[u.userId].tryCounts = this.fillPlatformsCounts(u.counts)
@@ -221,7 +220,7 @@ export default {
     },
 
     exportExcel() {
-      const header = ['排名', '用户名', '真实姓名', '总AC', '总尝试']
+      const header = ['序号', '用户名', '真实姓名', '总AC', '总尝试']
       this.platforms.forEach(p => {
         header.push(`${p} AC`, `${p} 尝试`)
       })
@@ -257,15 +256,23 @@ export default {
     async manualUpdate() {
       this.updating = true
       try {
-        await manualRebuild()
-        this.$message.success('开始更新,需要一段时间')
-        await this.fetchLastUpdateTime()
-        this.fetchData()
-      } catch (error) {
-        this.$message.error(error.response?.data?.message || '更新失败')
+        const res = await manualRebuild()
+        if (res && res.data && res.data.success) {
+          this.$message.success('更新成功')
+          this.fetchData()
+          this.fetchLastUpdateTime()
+        } else {
+          this.$message.error('更新失败')
+        }
+      } catch (e) {
+        this.$message.error('更新失败')
       } finally {
         this.updating = false
       }
+    },
+
+    sortNumber(a, b) {
+      return (parseInt(a) || 0) - (parseInt(b) || 0)
     }
   }
 }

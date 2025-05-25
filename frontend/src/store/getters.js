@@ -50,6 +50,28 @@ const getters = {
     return ''
   },
 
+  hdu: state => {
+    const val = state.user.user.ojAccounts && state.user.user.ojAccounts.HDU
+    if (!val) return ''
+    if (Array.isArray(val)) {
+      return val.join(';')
+    } else if (typeof val === 'string') {
+      return val.split(/[,; ]+/).filter(Boolean).join(';')
+    }
+    return ''
+  },
+
+  unknow: state => {
+    const val = state.user.user.ojAccounts && state.user.user.ojAccounts.UNKNOWN
+    if (!val) return ''
+    if (Array.isArray(val)) {
+      return val.join(';')
+    } else if (typeof val === 'string') {
+      return val.split(/[,; ]+/).filter(Boolean).join(';')
+    }
+    return ''
+  },
+
   // 权限模块
   permission_routes: state => state.permission.routes,
 

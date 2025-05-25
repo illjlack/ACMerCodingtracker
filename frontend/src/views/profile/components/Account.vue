@@ -47,7 +47,17 @@
 
     <!-- POJ 账号 -->
     <el-form-item label="POJ 账号(多个账号用;隔开)">
-      <el-input v-model.trim="localUser.poj" placeholder="例如：123456" />
+      <el-input v-model.trim="localUser.poj" placeholder="例如：123456(还没写好爬虫)" />
+    </el-form-item>
+
+    <!-- HDU 账号 -->
+    <el-form-item label="HDU 账号(多个账号用;隔开)">
+      <el-input v-model.trim="localUser.hdu" placeholder="例如：hdu_user(还没写好爬虫)" />
+    </el-form-item>
+
+    <!-- 其他OJ平台账号（未知平台） -->
+    <el-form-item label="其他OJ平台账号(多个账号用;隔开)">
+      <el-input v-model.trim="localUser.unknown" placeholder="例如：otherOJ_1:name1;otherOJ_2:1" />
     </el-form-item>
 
     <!-- 提交按钮 -->
@@ -73,7 +83,9 @@ export default {
         avatar: '',
         luogu: '',
         codeforces: '',
-        poj: ''
+        poj: '',
+        hdu: '', // 添加 HDU 字段
+        unknown: '' // 添加 其他OJ平台 字段
       })
     }
   },

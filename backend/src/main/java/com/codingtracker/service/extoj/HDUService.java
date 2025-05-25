@@ -45,9 +45,11 @@ public class HDUService implements IExtOJAdapter {
 
     @Override
     public List<UserTryProblem> getUserTriesOnline(User user) {
-        List<UserTryProblem> tries = hduCrawler.userTryProblems(user);
-        logger.info("HDU 用户 {} 共抓取到 {} 条尝试记录", user.getUsername(), tries.size());
-        return tries;
+        return new ArrayList<>();
+
+        // List<UserTryProblem> tries = hduCrawler.userTryProblems(user);
+        // logger.info("HDU 用户 {} 共抓取到 {} 条尝试记录", user.getUsername(), tries.size());
+        // return tries;
     }
 
     @Override

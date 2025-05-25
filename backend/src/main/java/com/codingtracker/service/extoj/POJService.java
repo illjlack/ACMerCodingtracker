@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -43,11 +44,13 @@ public class POJService implements IExtOJAdapter {
 
     @Override
     public List<UserTryProblem> getUserTriesOnline(User user) {
+        return new ArrayList<>();
+        
         // Delegate to POJCrawler which returns UserTryProblem list
-        List<UserTryProblem> tries = pojCrawler.userTryProblems(user);
-        logger.info("POJ 用户 {} 共抓取到 {} 条尝试记录",
-                user.getUsername(), tries.size());
-        return tries;
+        // List<UserTryProblem> tries = pojCrawler.userTryProblems(user);
+        // logger.info("POJ 用户 {} 共抓取到 {} 条尝试记录",
+        //         user.getUsername(), tries.size());
+        // return tries;
     }
 
     @Override

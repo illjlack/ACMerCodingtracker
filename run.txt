@@ -1,0 +1,4 @@
+docker-compose down -v  # 停止并删除容器和卷
+docker volume ls  # 检查卷是否仍然存在
+docker volume prune  # 删除未使用的卷
+docker-compose up --build  # 重新构建并启动所有服务

@@ -94,7 +94,7 @@ public class HDUCrawler {
             logger.warn("用户 {} 未配置 {} 账号", user.getUsername(), getOjType());
             return Collections.emptyList();
         }
-
+        
         List<UserTryProblem> tries = new ArrayList<>();
         for (String handle : handles) {
             String statusUrl = String.format(statusUrlTpl, handle);
