@@ -1,50 +1,4 @@
 import request from '@/utils/request'
-
-/**
- * 获取排行榜数据
- * @param {Object} params - 查询参数，如分页、搜索关键词等
- * @returns Promise
- */
-export function fetchDashboardRanking(params) {
-  return request({
-    url: '/dashboard/ranking',
-    method: 'get',
-    params
-  })
-}
-
-/**
- * 刷新排行榜数据
- * @returns Promise
- */
-export function refreshDashboardData() {
-  return request({
-    url: '/dashboard/ranking/refresh',
-    method: 'post'
-  })
-}
-
-/**
- * 获取用户每日做题统计
- * @param {Object} params - 包含 userId，如 { userId: 123 }
- * @returns {Promise}
- */
-export function fetchDailyPbStats(params) {
-  return request({
-    url: '/dashboard/daily-stats',
-    method: 'get',
-    params
-  })
-}
-
-export function fetchUserProblemDetails(params) {
-  return request({
-    url: '/dashboard/user/problems',
-    method: 'get',
-    params
-  })
-}
-
 /**
  * 获取AC题数统计
  * @param {Object} params - 查询参数，如 { start: '2021-05-01T00:00:00', end: '2025-05-24T23:59:59' }
@@ -93,3 +47,15 @@ export function fetchLastUpdate() {
   })
 }
 
+/**
+ * 获取用户尝试记录分页列表
+ * @param {string} username 用户名
+ * @param {number} page    0-based 页码
+ * @param {number} size    每页条数
+ * @returns Promise<AxiosResponse>
+ */
+export function listUserTries(username, page = 0, size = 10) {
+  return request(`/api/usertry/list/${username}`, {
+    params: { page, size }
+  })
+}

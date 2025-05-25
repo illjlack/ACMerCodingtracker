@@ -2,6 +2,14 @@
 
 import request from '@/utils/request'
 
+export function fetchUserInfoByName(username) {
+  return request({
+    url: `/api/auth/info`,
+    method: 'get',
+    params: { username }
+  })
+}
+
 /**
  * 用户登录
  * @param {{ username: string, password: string }} data

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,7 @@ public class ExtOjService {
     private final ExtOjPbInfoRepository pbInfoRepo;
     private final SystemStatsLoader statsLoader;  // 注入加载器
     private final List<IExtOJAdapter> adapters;
-
+    private final DataMigrationService dataMigrationService;
     @Lazy
     @Autowired
     private ExtOjService selfProxy;
@@ -45,13 +46,15 @@ public class ExtOjService {
                         UserTryProblemRepository tryRepo,
                         ExtOjPbInfoRepository pbInfoRepo,
                         SystemStatsLoader statsLoader,
-                        List<IExtOJAdapter> adapters) {  // 注入自己
+                        List<IExtOJAdapter> adapters,
+                        DataMigrationService dataMigrationService) {  // 注入自己
         this.userRepository = userRepository;
         this.tryRepo = tryRepo;
         this.pbInfoRepo = pbInfoRepo;
         this.statsLoader = statsLoader;
         this.adapters = adapters;
         this.selfProxy = selfProxy;
+        this.dataMigrationService = dataMigrationService;
     }
 
     // 触发异步刷新所有用户尝试记录
@@ -172,6 +175,9 @@ public class ExtOjService {
         );
 
         logger.info("刷新完成，新增 {} 条尝试记录，更新时间 {}", added.size(), statsLoader.getLastUpdateTime());
+
+        // 新建冗余表中
+        dataMigrationService.rebuildUserTryProblemOptimizedTable();
     }
 
     @Transactional
@@ -192,5 +198,10 @@ public class ExtOjService {
 
     public LocalDateTime getLastUpdateTime() {
         return statsLoader.getLastUpdateTime();
+    }
+
+    @Scheduled(cron = "0 0 0/6 * * ?")  // 每 6 小时执行一次（整点）
+    public void scheduledFlushTriesDB() {
+        triggerFlushTriesDB();  // 调用手动触发的方法
     }
 }

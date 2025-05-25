@@ -27,7 +27,7 @@ public class ExtOjPbInfo implements Serializable {
     private OJPlatform ojName;
 
     /** 在 cf 中比赛 id + 题号 **/
-    @Column(length = 20)
+    @Column(length = 50)
     private String pid;
 
     /** 题目名称 */

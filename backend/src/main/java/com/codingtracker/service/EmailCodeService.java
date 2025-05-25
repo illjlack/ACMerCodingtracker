@@ -53,7 +53,7 @@ public class EmailCodeService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail);
         message.setSubject("验证码通知");
-        message.setText("您的验证码是：" + code + "，有效期5分钟，请尽快使用。");
+        message.setText("糟糕的家伙，你的的验证码是：" + code + "，有效期5分钟，请尽快使用。");
         message.setFrom(fromEmail);
 
         mailSender.send(message);

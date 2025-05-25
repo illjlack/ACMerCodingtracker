@@ -1,14 +1,23 @@
 <template>
-  <div v-if="userExists" class="app-container"> <!-- 有用户信息才显示 -->
+  <div v-if="userExists" class="app-container">
     <el-row :gutter="20">
       <el-col :span="6" :xs="24">
         <user-card :user="user" />
       </el-col>
       <el-col :span="18" :xs="24">
         <el-card>
-          <el-tabs v-model="activeTab">
+          <!-- 绑定 activeTab 并监听切换事件 -->
+          <el-tabs v-model="activeTab" @tab-click="onTabClick">
             <el-tab-pane label="Account" name="account">
               <account :user="user" @update="onUserUpdate" />
+            </el-tab-pane>
+            <el-tab-pane label="Timeline" name="timeline">
+              <!-- 只有activeTab为timeline时才渲染时间线组件 -->
+              <user-timeline
+                v-if="activeTab === 'timeline'"
+                ref="timeline"
+                :username="name"
+              />
             </el-tab-pane>
           </el-tabs>
         </el-card>
@@ -24,13 +33,18 @@
 import { mapGetters, mapActions } from 'vuex'
 import UserCard from './components/UserCard'
 import Account from './components/Account'
+import UserTimeline from './components/TimeLine' // 注意路径和名字是否正确
 
 export default {
   name: 'Profile',
-  components: { UserCard, Account },
+  components: {
+    UserCard,
+    Account,
+    UserTimeline
+  },
   data() {
     return {
-      activeTab: 'account'
+      activeTab: 'account' // 默认激活账户页
     }
   },
   computed: {
@@ -45,7 +59,6 @@ export default {
       codeforces: 'codeforces',
       poj: 'poj'
     }),
-    // 计算完整用户对象，绑定到子组件
     user() {
       return {
         name: this.name,
@@ -59,9 +72,8 @@ export default {
         poj: this.poj
       }
     },
-    // 判断是否有有效用户数据
     userExists() {
-      return this.name && this.roles.length > 0
+      return !!this.name && this.roles.length > 0
     }
   },
   created() {
@@ -69,22 +81,26 @@ export default {
   },
   methods: {
     ...mapActions('user', ['getInfo', 'modifyUser']),
-    // 统一调用 Vuex action 拉取用户信息，避免重复请求
     async fetchUserInfo() {
       try {
         await this.getInfo()
       } catch (err) {
         this.$message.error('获取用户信息失败，请重新登录')
-        // 可考虑跳转登录页
       }
     },
-    // 处理子组件 Account 更新事件，调用 Vuex action 同步更新数据
+    onTabClick(tab) {
+      if (tab.name === 'timeline') {
+        // 点击 timeline 标签时，调用时间线组件的 fetchPage
+        this.$refs.timeline && this.$refs.timeline.fetchPage(0)
+      }
+    },
     async onUserUpdate(updatedUser) {
-      // 辅助函数：将账号字符串拆分、去空、用中文分号拼接
       function normalizeAccounts(accountStr) {
         if (!accountStr) return ''
-        // 支持英文分号 ; 或中文分号 ；
-        const parts = accountStr.split(/;|；/).map(s => s.trim()).filter(s => s.length > 0)
+        const parts = accountStr
+          .split(/;|；/)
+          .map(s => s.trim())
+          .filter(s => s)
         return parts.join(';')
       }
       try {
@@ -101,14 +117,18 @@ export default {
             POJ: normalizeAccounts(updatedUser.poj)
           }
         }
-
         await this.modifyUser(payload)
         this.$message.success('用户信息已更新')
-      } catch (err) {
+      } catch {
         this.$message.error('更新用户信息失败')
       }
     }
-
   }
 }
 </script>
+
+<style scoped>
+.app-container {
+  padding: 20px;
+}
+</style>

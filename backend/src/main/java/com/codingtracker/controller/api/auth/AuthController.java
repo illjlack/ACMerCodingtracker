@@ -116,6 +116,19 @@ public class AuthController {
     public ApiResponse<UserInfoDTO> getUserInfo() {
         String username = SecurityContextHolder.getContext()
                 .getAuthentication().getName();
+        logger.info("请求获取用户个人信息: 用户名={}", username);
+        Optional<User> userOpt = userService.getUserByUsername(username);
+        if (userOpt.isEmpty()) {
+            logger.warn("未找到用户个人信息: 用户名={}", username);
+            return ApiResponse.error("未找到用户信息");
+        }
+        UserInfoDTO dto = UserInfoDTO.fromUser(userOpt.get());
+        logger.info("成功返回用户个人信息: 用户名={}", username);
+        return ApiResponse.ok("获取成功", dto);
+    }
+
+    @GetMapping("/info")
+    public ApiResponse<UserInfoDTO> getUserInfo(@RequestParam("username") String username) {
         logger.info("请求获取用户信息: 用户名={}", username);
         Optional<User> userOpt = userService.getUserByUsername(username);
         if (userOpt.isEmpty()) {
@@ -126,6 +139,7 @@ public class AuthController {
         logger.info("成功返回用户信息: 用户名={}", username);
         return ApiResponse.ok("获取成功", dto);
     }
+
 
     // 用户登出
     @PostMapping("/logout")

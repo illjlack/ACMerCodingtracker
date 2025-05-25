@@ -9,6 +9,7 @@ import com.codingtracker.service.UserTryProblemService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -36,22 +37,29 @@ public class UserTryController {
      * 获取指定用户的所有尝试记录
      */
     @GetMapping("/list/{username}")
-    public ApiResponse<Map<String, Object>> list(@PathVariable String username) {
+    public ApiResponse<Map<String, Object>> list(
+            @PathVariable String username,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
         Optional<User> userOpt = userService.getUserByUsername(username);
         if (userOpt.isEmpty()) {
             logger.warn("User not found: {}", username);
             return ApiResponse.error("用户未找到");
         }
-        List<UserTryProblemDTO> dtoList = extOjService.getUserTries(userOpt.get()).stream()
-                .map(utp -> new UserTryProblemDTO(utp, username))
-                .collect(Collectors.toList());
+
+        Page<UserTryProblemDTO> pageResult = userTryProblemService
+                .getUserTryProblemsDTO(username, page, size);
 
         Map<String, Object> data = Map.of(
                 "username", username,
-                "userTryProblems", dtoList
+                "items", pageResult.getContent(),
+                "total", pageResult.getTotalElements()
         );
+
         return ApiResponse.ok("查询成功", data);
     }
+
 
     /**
      * 更新数据库中的用户尝试记录

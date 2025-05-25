@@ -101,7 +101,7 @@ export const constantRoutes = [
         component: () => import('@/views/userPbInfo/index'),
         name: 'UserPbInfo',
         props: route => ({ name: route.params.name }),
-        meta: { title: ':name的个人做题信息', icon: 'user', noCache: true, needDynamic: true, roles: ['admin', 'editor', 'user'] }
+        meta: { title: ':name的个人做题信息', icon: 'user', noCache: true, needDynamic: true }
       }
     ]
   },
@@ -152,7 +152,7 @@ export const asyncRoutes = [
         component: () => import('@/views/userPbInfo/index'),
         name: 'UserPbInfo',
         props: route => ({ name: route.params.name }),
-        meta: { title: '个人做题信息', icon: 'user', noCache: true, needDynamic: true, roles: ['admin', 'editor', 'user'] }
+        meta: { title: '个人做题信息', icon: 'user', noCache: true, needDynamic: true }
       }
     ]
   }

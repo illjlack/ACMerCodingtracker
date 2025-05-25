@@ -72,7 +72,13 @@
       >
         <el-table-column type="index" label="排名" min-width="60" />
 
-        <el-table-column prop="username" label="用户名" min-width="120" />
+        <el-table-column label="用户名" min-width="120">
+          <template #default="{ row }">
+            <router-link :to="`/userPbInfo/${row.username}`" style="color: #409EFF;">
+              {{ row.username }}
+            </router-link>
+          </template>
+        </el-table-column>
 
         <el-table-column prop="realName" label="真实姓名" min-width="120" />
 
