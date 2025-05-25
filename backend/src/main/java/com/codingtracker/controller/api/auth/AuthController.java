@@ -89,8 +89,6 @@ public class AuthController {
             logger.warn("未找到用户信息: 用户名={}", username);
             return ApiResponse.error("未找到用户信息");
         }
-        UserInfoDTO dto = UserInfoDTO.fromUser(userOpt.get());
-
         // 调用业务层修改
         userService.modifyUser(user);
         return ApiResponse.ok();

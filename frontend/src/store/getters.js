@@ -61,7 +61,7 @@ const getters = {
     return ''
   },
 
-  unknow: state => {
+  unknown: state => {
     const val = state.user.user.ojAccounts && state.user.user.ojAccounts.UNKNOWN
     if (!val) return ''
     if (Array.isArray(val)) {
