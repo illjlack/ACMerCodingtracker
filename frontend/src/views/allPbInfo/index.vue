@@ -257,7 +257,7 @@ export default {
       this.updating = true
       try {
         const res = await manualRebuild()
-        if (res && res.data && res.data.success) {
+        if (res && res.success) {
           this.$message.success('更新成功')
           this.fetchData()
           this.fetchLastUpdateTime()
