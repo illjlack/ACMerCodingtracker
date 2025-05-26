@@ -258,14 +258,14 @@ export default {
       try {
         const res = await manualRebuild()
         if (res && res.success) {
-          this.$message.success('更新成功')
+          this.$message.success(res.$message)
           this.fetchData()
           this.fetchLastUpdateTime()
         } else {
-          this.$message.error('更新失败')
+          this.$message.error(res.$message)
         }
       } catch (e) {
-        this.$message.error('更新失败')
+        this.$message.error(res.$message)
       } finally {
         this.updating = false
       }

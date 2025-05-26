@@ -67,13 +67,13 @@ export const constantRoutes = [
     path: '/profile',
     component: Layout,
     redirect: '/profile/index',
-    hidden: true,
+    //hidden: true,
     children: [
       {
         path: 'index',
         component: () => import('@/views/profile/index'),
         name: 'Profile',
-        meta: { title: 'Profile', icon: 'user', noCache: true }
+        meta: { title: '我的主页', icon: 'user', noCache: true }
       }
     ]
   },
@@ -106,6 +106,18 @@ export const constantRoutes = [
     ]
   },
   // OJ 外部链接分组
+  // {
+  //   path: '/userMananger',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: '',
+  //       component: () => import('@/views/userMananger/index'),
+  //       name: 'userMananger',
+  //       meta: { title: '用户管理', icon: 'peoples', noCache: true, }
+  //     }
+  //   ]
+  // },
   {
     path: '/oj',
     component: Layout,
@@ -143,19 +155,19 @@ export const constantRoutes = [
 
 export const asyncRoutes = [
   // 个人做题信息页：可选传参 userId
-  {
-    path: '/userPbInfo',
-    component: Layout,
-    children: [
-      {
-        path: ':name',
-        component: () => import('@/views/userPbInfo/index'),
-        name: 'UserPbInfo',
-        props: route => ({ name: route.params.name }),
-        meta: { title: '个人做题信息', icon: 'user', noCache: true, needDynamic: true }
-      }
-    ]
-  }
+  // {
+  //   path: '/userPbInfo',
+  //   component: Layout,
+  //   children: [
+  //     {
+  //       path: ':name',
+  //       component: () => import('@/views/userPbInfo/index'),
+  //       name: 'UserPbInfo',
+  //       props: route => ({ name: route.params.name }),
+  //       meta: { title: '个人做题信息', icon: 'user', noCache: true, needDynamic: true }
+  //     }
+  //   ]
+  // }
 ]
 
 const createRouter = () =>

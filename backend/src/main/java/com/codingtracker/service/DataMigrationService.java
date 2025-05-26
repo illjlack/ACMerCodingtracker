@@ -4,107 +4,104 @@ import com.codingtracker.dto.UserTryProblemDTO;
 import com.codingtracker.model.UserTryProblemOptimized;
 import com.codingtracker.repository.UserTryProblemOptimizedRepository;
 import com.codingtracker.repository.UserTryProblemRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class DataMigrationService {
 
-    @Autowired
-    private UserTryProblemOptimizedRepository userTryProblemOptimizedRepository;
+    private final UserTryProblemOptimizedRepository optimizedRepo;
+    private final UserTryProblemRepository tryRepo;
+    private final AtomicBoolean isUpdating = new AtomicBoolean(false);
 
     @Autowired
-    private UserTryProblemRepository userTryProblemRepository;
+    public DataMigrationService(UserTryProblemOptimizedRepository optimizedRepo,
+                                UserTryProblemRepository tryRepo) {
+        this.optimizedRepo = optimizedRepo;
+        this.tryRepo = tryRepo;
+    }
 
-    private boolean isUpdating = false; // 用来标记是否正在执行更新操作
-
-    /**
-     * 重建冗余表
-     */
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void rebuildUserTryProblemOptimizedTable() {
-        if (isUpdating) {
-            throw new RuntimeException("数据迁移正在进行中，请稍后再试");
+        if (!isUpdating.compareAndSet(false, true)) {
+            throw new IllegalStateException("冗余表正在重建中，请稍后重试");
         }
 
-        isUpdating = true; // 设置更新标记为正在更新
+        log.info("【DataMigration】开始重建冗余表");
 
         try {
-            // Step 1: 删除旧数据
-            userTryProblemOptimizedRepository.deleteAll();
+            optimizedRepo.deleteAllInBatch();
 
-            // Step 2: 获取所有 UserTryProblem 数据并转化为 DTO
-            List<UserTryProblemDTO> dtos = userTryProblemRepository.findAll()
-                    .stream()
-                    .map(userTryProblem -> new UserTryProblemDTO(userTryProblem, userTryProblem.getUser().getUsername()))
-                    .toList();
+            List<UserTryProblemDTO> dtos = tryRepo.findAll()
+                .stream()
+                .map(utp -> new UserTryProblemDTO(utp, utp.getUser().getUsername()))
+                .collect(Collectors.toList());
 
-            // Step 3: 将 DTO 转化为 UserTryProblemOptimized 并保存到冗余表
-            for (UserTryProblemDTO dto : dtos) {
-                UserTryProblemOptimized optimized = UserTryProblemOptimized.builder()
-                        .username(dto.getUsername()) // 根据需要设置用户名为 User ID
-                        .problemId(dto.getProblemId())
-                        .ojName(dto.getOjName())
-                        .pid(dto.getPid())
-                        .problemName(dto.getName())
-                        .problemType(dto.getType())
-                        .points(dto.getPoints())
-                        .url(dto.getUrl())
-                        .result(dto.getResult())
-                        .attemptTime(dto.getAttemptTime())
-                        .tags(String.join(",", dto.getTags())) // 以逗号分隔标签
-                        .build();
-                userTryProblemOptimizedRepository.save(optimized); // 保存到冗余表
+            List<UserTryProblemOptimized> records = dtos.stream()
+                .map(dto -> UserTryProblemOptimized.builder()
+                    .username(dto.getUsername())
+                    .problemId(dto.getProblemId())
+                    .ojName(dto.getOjName())
+                    .pid(dto.getPid())
+                    .problemName(dto.getName())
+                    .problemType(dto.getType())
+                    .points(dto.getPoints())
+                    .url(dto.getUrl())
+                    .result(dto.getResult())
+                    .attemptTime(dto.getAttemptTime())
+                    .tags(String.join(",", dto.getTags()))
+                    .build())
+                .collect(Collectors.toList());
+
+            if (records.isEmpty()) {
+                log.warn("【DataMigration】没有可保存的数据，跳过写入");
+                return;
             }
+
+            optimizedRepo.saveAll(records);
+            log.info("【DataMigration】成功保存 {} 条冗余记录", records.size());
+
+        } catch (Exception e) {
+            log.error("【DataMigration】重建冗余表异常", e);
+            throw e;
         } finally {
-            isUpdating = false; // 更新完成后，将标记恢复
+            isUpdating.set(false);
         }
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public Page<UserTryProblemDTO> getOptimizedUserTryProblems(Pageable pageable, String username) {
-        // 分页查询 UserTryProblemOptimized 数据并转换为 DTO
-        Page<UserTryProblemOptimized> pageResult = userTryProblemOptimizedRepository.findByUsername(username, pageable);
-
-        return pageResult.map(optimized -> new UserTryProblemDTO(
-                optimized.getUsername(),
-                optimized.getProblemId(),
-                optimized.getOjName(),
-                optimized.getPid(),
-                optimized.getProblemName(),
-                optimized.getProblemType(),
-                optimized.getPoints(),
-                optimized.getUrl(),
-                // 将标签字符串拆分为 Set<String>
-                tagsToSet(optimized.getTags()),
-                optimized.getResult(),
-                optimized.getAttemptTime()
-        ));
+        return optimizedRepo.findByUsername(username, pageable).map(opt ->
+            new UserTryProblemDTO(
+                opt.getUsername(),
+                opt.getProblemId(),
+                opt.getOjName(),
+                opt.getPid(),
+                opt.getProblemName(),
+                opt.getProblemType(),
+                opt.getPoints(),
+                opt.getUrl(),
+                tagsToSet(opt.getTags()),
+                opt.getResult(),
+                opt.getAttemptTime()
+            )
+        );
     }
 
-    /**
-     * 将逗号分隔的标签字符串转化为 Set<String>
-     * @param tags 逗号分隔的标签字符串
-     * @return Set<String>
-     */
     private Set<String> tagsToSet(String tags) {
-        if (tags == null || tags.isEmpty()) {
-            return new HashSet<>();
-        }
+        if (tags == null || tags.isBlank()) return new HashSet<>();
         return Arrays.stream(tags.split(","))
-                .map(String::trim) // 移除空格
-                .collect(Collectors.toSet());
+            .map(String::trim)
+            .collect(Collectors.toSet());
     }
-
 }

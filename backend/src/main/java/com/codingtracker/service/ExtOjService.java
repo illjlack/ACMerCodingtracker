@@ -7,7 +7,7 @@ import com.codingtracker.repository.ExtOjPbInfoRepository;
 import com.codingtracker.repository.UserRepository;
 import com.codingtracker.repository.UserTryProblemRepository;
 import com.codingtracker.service.extoj.IExtOJAdapter;
-import com.codingtracker.init.SystemStatsLoader;  // 引入加载器
+import com.codingtracker.init.SystemStatsLoader;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,13 +32,20 @@ public class ExtOjService {
     private final UserRepository userRepository;
     private final UserTryProblemRepository tryRepo;
     private final ExtOjPbInfoRepository pbInfoRepo;
-    private final SystemStatsLoader statsLoader;  // 注入加载器
+    private final SystemStatsLoader statsLoader;
     private final List<IExtOJAdapter> adapters;
     private final DataMigrationService dataMigrationService;
+
+    // 代理自身
     @Lazy
     @Autowired
     private ExtOjService selfProxy;
-    // 是否正在更新
+
+    // 代理 DataMigrationService
+    @Lazy
+    @Autowired
+    private DataMigrationService selfProxyMigration;
+
     @Getter
     private volatile boolean updating = false;
 
@@ -47,40 +54,34 @@ public class ExtOjService {
                         ExtOjPbInfoRepository pbInfoRepo,
                         SystemStatsLoader statsLoader,
                         List<IExtOJAdapter> adapters,
-                        DataMigrationService dataMigrationService) {  // 注入自己
+                        DataMigrationService dataMigrationService) {
         this.userRepository = userRepository;
         this.tryRepo = tryRepo;
         this.pbInfoRepo = pbInfoRepo;
         this.statsLoader = statsLoader;
         this.adapters = adapters;
-        this.selfProxy = selfProxy;
         this.dataMigrationService = dataMigrationService;
     }
 
-    // 触发异步刷新所有用户尝试记录
     public synchronized boolean triggerFlushTriesDB() {
-        if (updating) {
-            return false; // 已经在更新中
-        }
+        if (updating) return false;
         updating = true;
         selfProxy.asyncFlushTriesDB();
         return true;
     }
 
-    @Async  // 需要配置 @EnableAsync
+    @Async
     @Transactional
-    void asyncFlushTriesDB() {
+    public void asyncFlushTriesDB() {
         try {
             flushTriesDB();
+            logger.info("尝试重建冗余表...");
+            selfProxyMigration.rebuildUserTryProblemOptimizedTable();
         } catch (Exception e) {
             logger.error("异步刷新尝试记录异常", e);
         } finally {
             updating = false;
         }
-    }
-
-    private List<IExtOJAdapter> allExtOjServices() {
-        return adapters;
     }
 
     private SortedSet<UserTryProblem> fetchAllUserTries(List<User> users) {
@@ -96,26 +97,21 @@ public class ExtOjService {
             }
         }
 
+        pool.shutdown();
         try {
-            pool.shutdown();
             if (!pool.awaitTermination(100, TimeUnit.MINUTES)) {
-                logger.warn("所有任务未在指定时间内完成，强制关闭线程池");
+                logger.warn("所有任务未在指定时间内完成");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.error("线程池等待任务完成时发生中断", e);
         }
 
         for (Future<List<UserTryProblem>> f : futures) {
             try {
                 List<UserTryProblem> problems = f.get(30, TimeUnit.SECONDS);
-                if (problems != null) {
-                    set.addAll(problems);
-                }
-            } catch (TimeoutException | InterruptedException e) {
-                logger.error("任务超时", e);
-            } catch (ExecutionException e) {
-                logger.error("获取尝试记录出错", e);
+                if (problems != null) set.addAll(problems);
+            } catch (Exception e) {
+                logger.error("获取尝试记录失败", e);
             }
         }
 
@@ -123,43 +119,9 @@ public class ExtOjService {
         return set;
     }
 
-    private SortedSet<ExtOjPbInfo> fetchAllProblemInfo() {
-        SortedSet<ExtOjPbInfo> set = new TreeSet<>();
-        for (IExtOJAdapter adapter : adapters) {
-            set.addAll(adapter.getAllPbInfoOnline());
-        }
-        logger.info("抓取完成，共 {} 道题目信息", set.size());
-        return set;
-    }
-
-    @Transactional
-    public void flushUserLastTryDate(Set<UserTryProblem> tries) {
-        Map<User, LocalDateTime> lastTimes = tries.stream()
-                .collect(Collectors.toMap(
-                        UserTryProblem::getUser,
-                        UserTryProblem::getAttemptTime,
-                        BinaryOperator.maxBy(Comparator.naturalOrder())
-                ));
-        lastTimes.forEach((user, time) -> user.setLastTryDate(time));
-        userRepository.saveAll(lastTimes.keySet());
-        logger.info("已更新 {} 位用户的最后尝试时间", lastTimes.size());
-    }
-
-    @Transactional
-    public void flushTriesByUser(User user) {
-        logger.info("刷新用户 {} 的尝试记录", user.getUsername());
-        SortedSet<UserTryProblem> current = fetchAllUserTries(Collections.singletonList(user));
-        List<UserTryProblem> existing = tryRepo.findByUser(user);
-        Set<UserTryProblem> added = new HashSet<>(current);
-        existing.forEach(added::remove);
-        tryRepo.saveAll(added);
-        flushUserLastTryDate(added);
-        logger.info("用户 {} 新增 {} 条尝试记录", user.getUsername(), added.size());
-    }
-
     @Transactional
     public void flushTriesDB() {
-        logger.info("刷新所有用户的尝试记录");
+        logger.info("刷新所有用户的尝试记录...");
         List<User> users = userRepository.findAll();
         SortedSet<UserTryProblem> current = fetchAllUserTries(users);
         List<UserTryProblem> existing = tryRepo.findAll();
@@ -167,41 +129,32 @@ public class ExtOjService {
         existing.forEach(added::remove);
         tryRepo.saveAll(added);
         flushUserLastTryDate(added);
-
         statsLoader.updateStats(
                 statsLoader.getUserCount(),
                 statsLoader.getSumProblemCount(),
                 statsLoader.getSumTryCount()
         );
-
-        logger.info("刷新完成，新增 {} 条尝试记录，更新时间 {}", added.size(), statsLoader.getLastUpdateTime());
-
-        // 新建冗余表中
-        dataMigrationService.rebuildUserTryProblemOptimizedTable();
+        logger.info("刷新完成，新增 {} 条记录，最后更新时间 {}", added.size(), statsLoader.getLastUpdateTime());
     }
 
     @Transactional
-    public void flushPbInfoDB() {
-        logger.info("刷新题目信息库");
-        SortedSet<ExtOjPbInfo> current = fetchAllProblemInfo();
-        List<ExtOjPbInfo> existing = pbInfoRepo.findAll();
-        List<ExtOjPbInfo> merged = new ArrayList<>(current);
-        existing.stream().filter(info -> !current.contains(info)).forEach(merged::add);
-        pbInfoRepo.deleteAll();
-        pbInfoRepo.saveAll(merged);
-        logger.info("题目信息刷新完成，共 {} 条记录", merged.size());
-    }
-
-    public List<UserTryProblem> getUserTries(User user) {
-        return tryRepo.findByUser(user);
+    public void flushUserLastTryDate(Set<UserTryProblem> tries) {
+        Map<User, LocalDateTime> lastTimes = tries.stream().collect(Collectors.toMap(
+                UserTryProblem::getUser,
+                UserTryProblem::getAttemptTime,
+                BinaryOperator.maxBy(Comparator.naturalOrder())
+        ));
+        lastTimes.forEach(User::setLastTryDate);
+        userRepository.saveAll(lastTimes.keySet());
+        logger.info("已更新 {} 位用户的最后尝试时间", lastTimes.size());
     }
 
     public LocalDateTime getLastUpdateTime() {
         return statsLoader.getLastUpdateTime();
     }
 
-    @Scheduled(cron = "0 0 0/6 * * ?")  // 每 6 小时执行一次（整点）
+    @Scheduled(cron = "0 0 0/6 * * ?")
     public void scheduledFlushTriesDB() {
-        triggerFlushTriesDB();  // 调用手动触发的方法
+        triggerFlushTriesDB();
     }
 }
