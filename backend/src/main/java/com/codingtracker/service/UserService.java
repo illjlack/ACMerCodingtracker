@@ -7,8 +7,10 @@ import com.codingtracker.model.UserOJ;
 import com.codingtracker.repository.UserOJRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.codingtracker.model.User;
 import com.codingtracker.repository.UserRepository;
@@ -17,20 +19,23 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final UserOJRepository userOJRepository;
     private final BCryptPasswordEncoder passwordEncoder;
     private final AvatarStorageService avatarStorageService;
-    private final SystemStatsLoader statsLoader;  // 统计加载器
+    private final SystemStatsLoader statsLoader; // 统计加载器
 
     @Autowired
     public UserService(UserRepository userRepository,
-                       UserOJRepository userOJRepository,
-                       BCryptPasswordEncoder passwordEncoder,
-                       AvatarStorageService avatarStorageService,
-                       SystemStatsLoader statsLoader) {
+            UserOJRepository userOJRepository,
+            BCryptPasswordEncoder passwordEncoder,
+            AvatarStorageService avatarStorageService,
+            SystemStatsLoader statsLoader) {
         this.userRepository = userRepository;
         this.userOJRepository = userOJRepository;
         this.passwordEncoder = passwordEncoder;
@@ -104,7 +109,8 @@ public class UserService {
             for (Map.Entry<String, String> entry : ojAccountsMap.entrySet()) {
                 String platformName = entry.getKey();
                 String accountsStr = entry.getValue();
-                if (accountsStr == null || accountsStr.trim().isEmpty()) continue;
+                if (accountsStr == null || accountsStr.trim().isEmpty())
+                    continue;
 
                 Set<String> acctSet = Arrays.stream(accountsStr.split("[；;]"))
                         .map(String::trim)
@@ -205,10 +211,6 @@ public class UserService {
         return userRepository.findByRolesContains(role);
     }
 
-    public Optional<User> getUserByUsername(String username) {
-        return userRepository.findByUsername(username);
-    }
-
     /**
      * 添加 OJ 账号
      */
@@ -250,7 +252,8 @@ public class UserService {
             String ojName = OJPlatform.fromName(platform).toString();
             List<UserOJ> ojAccounts = user.getOjAccounts();
             for (UserOJ ojAccount : ojAccounts) {
-                if (ojAccount.getPlatform().toString().equals(ojName) && ojAccount.getAccountName().equals(accountName)) {
+                if (ojAccount.getPlatform().toString().equals(ojName)
+                        && ojAccount.getAccountName().equals(accountName)) {
                     ojAccounts.remove(ojAccount);
                     userOJRepository.delete(ojAccount);
                     userRepository.save(user);
@@ -278,19 +281,71 @@ public class UserService {
     /**
      * 创建新用户
      */
-    public User createUser(User u) {
-        User savedUser = userRepository.save(u);
+    @Transactional
+    public User createUser(User user) {
+        // 验证必填字段
+        if (!StringUtils.hasText(user.getUsername())) {
+            throw new RuntimeException("Username is required");
+        }
+        if (!StringUtils.hasText(user.getPassword())) {
+            throw new RuntimeException("Password is required");
+        }
+        if (!StringUtils.hasText(user.getRealName())) {
+            throw new RuntimeException("Real name is required");
+        }
+        if (!StringUtils.hasText(user.getEmail())) {
+            throw new RuntimeException("Email is required");
+        }
+        if (!StringUtils.hasText(user.getMajor())) {
+            throw new RuntimeException("Major is required");
+        }
 
-        updateUserCountStat();
+        // 检查用户名和邮箱是否已存在
+        if (userRepository.existsByUsername(user.getUsername())) {
+            throw new RuntimeException("Username already exists");
+        }
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new RuntimeException("Email already exists");
+        }
 
-        return savedUser;
+        // 设置默认值
+        user.setActive(true);
+        if (user.getRoles() == null || user.getRoles().isEmpty()) {
+            user.setRoles(Set.of(User.Type.ACMER));
+        }
+
+        // 加密密码
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        return userRepository.save(user);
     }
 
     /**
      * 更新已有用户
      */
-    public User updateUser(User u) {
-        return userRepository.save(u);
+    @Transactional
+    public User updateUser(Integer id, User user) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 更新基本信息
+        if (StringUtils.hasText(user.getRealName())) {
+            existingUser.setRealName(user.getRealName());
+        }
+        if (StringUtils.hasText(user.getEmail())) {
+            if (!user.getEmail().equals(existingUser.getEmail()) &&
+                    userRepository.existsByEmail(user.getEmail())) {
+                throw new RuntimeException("Email already exists");
+            }
+            existingUser.setEmail(user.getEmail());
+        }
+        if (StringUtils.hasText(user.getMajor())) {
+            existingUser.setMajor(user.getMajor());
+        }
+        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+            existingUser.setRoles(user.getRoles());
+        }
+
+        return userRepository.save(existingUser);
     }
 
     /**
@@ -303,7 +358,11 @@ public class UserService {
     /**
      * 删除用户
      */
+    @Transactional
     public void deleteUser(Integer id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
+        }
         userRepository.deleteById(id);
     }
 
@@ -326,5 +385,40 @@ public class UserService {
 
     public Optional<User> findByUsername(String username) {
         return userRepository.findByUsername(username);
+    }
+
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    public User getUserById(Integer id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public Optional<User> getUserByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    public void toggleUserStatus(Integer id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setActive(!user.isActive());
+        userRepository.save(user);
+    }
+
+    public List<User> searchUsers(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return userRepository.findAll();
+        }
+        return userRepository.searchByUsernameOrRealName(keyword);
+    }
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
     }
 }

@@ -111,10 +111,10 @@ public class UserTryController {
             return ApiResponse.error("您没有登录");
         }
 
-        if (!userOpt.get().isAdmin()) {
-            logger.warn("非管理员用户尝试触发系统重建：{}", username);
-            return ApiResponse.error("权限不足，仅管理员可操作");
-        }
+//        if (!userOpt.get().isAdmin()) {
+//            logger.warn("非管理员用户尝试触发系统重建：{}", username);
+//            return ApiResponse.error("权限不足，仅管理员可操作");
+//        }
 
         if (extOjService.isUpdating()) {
             logger.warn("当前已有更新进行中，用户 {} 的重建请求被拒绝", username);

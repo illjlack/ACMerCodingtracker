@@ -14,7 +14,7 @@ import log from 'echarts/src/scale/Log'
 /**
  * constantRoutes
  * - 保留所有非 Layout 组件路由（登录、重定向、错误页等）
- * - 对于使用 Layout 的路由，只保留“个人信息”和“做题信息”两个页面
+ * - 对于使用 Layout 的路由，只保留"个人信息"和"做题信息"两个页面
  * - 添加 OJ 外部链接分组
  */
 export const constantRoutes = [
@@ -67,7 +67,7 @@ export const constantRoutes = [
     path: '/profile',
     component: Layout,
     redirect: '/profile/index',
-    //hidden: true,
+    // hidden: true,
     children: [
       {
         path: 'index',
@@ -88,6 +88,18 @@ export const constantRoutes = [
         component: () => import('@/views/allPbInfo/index'),
         name: 'allPbInfo',
         meta: { title: '团队做题信息', icon: 'peoples', noCache: true }
+      }
+    ]
+  },
+  {
+    path: '/userManagement',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/userManagement/index'),
+        name: 'UserManagement',
+        meta: { title: '用户管理', icon: 'user', noCache: true }
       }
     ]
   },

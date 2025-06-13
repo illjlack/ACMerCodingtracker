@@ -88,6 +88,12 @@ public class User implements Serializable, Comparable<User> {
     private LocalDateTime lastTryDate;
 
     /**
+     * 用户状态（是否激活）
+     */
+    @Column(nullable = false)
+    private boolean active = true;
+
+    /**
      * 用户身份（支持多个角色）
      * 使用 `@ElementCollection` 存储多个身份类型，映射为一张表
      */

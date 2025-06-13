@@ -258,14 +258,12 @@ export default {
       try {
         const res = await manualRebuild()
         if (res && res.success) {
-          this.$message.success(res.$message)
+          this.$message.success(res.message)
           this.fetchData()
           this.fetchLastUpdateTime()
-        } else {
-          this.$message.error(res.$message)
         }
       } catch (e) {
-        this.$message.error(res.$message)
+        this.$message.error(e.message)
       } finally {
         this.updating = false
       }

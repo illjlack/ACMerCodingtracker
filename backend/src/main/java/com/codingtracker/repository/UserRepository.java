@@ -1,8 +1,8 @@
 package com.codingtracker.repository;
 
 import com.codingtracker.model.User;
-import com.codingtracker.model.UserOJ;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     Optional<User> findByRealName(String realName);
 
     // 根据用户角色查找用户列表
-    List<User> findByRolesContains(User.Type role);
+    List<User> findByRolesContaining(User.Type role);
 
     // 判断用户名是否已存在
     boolean existsByUsername(String username);
@@ -26,5 +26,14 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // 判断真实姓名是否已存在
     boolean existsByRealName(String realName);
 
+    boolean existsByEmail(String email);
+
+    @Query("SELECT u FROM User u WHERE u.username LIKE %:keyword% OR u.realName LIKE %:keyword%")
+    List<User> searchByUsernameOrRealName(String keyword);
+
     List<User> findAllById(Iterable<Integer> ids);
+
+    List<User> findByRolesContains(User.Type role);
+
+    List<User> findByUsernameContainingIgnoreCaseOrRealNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String keyword, String keyword1, String keyword2);
 }

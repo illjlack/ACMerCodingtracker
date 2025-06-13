@@ -112,3 +112,60 @@ export function logout() {
     method: 'post'
   })
 }
+
+/**
+ * 获取用户列表
+ */
+export function getUserList() {
+  return request({
+    url: '/api/admin/users',
+    method: 'get'
+  })
+}
+
+/**
+ * 创建新用户
+ * @param {{ username: string, password: string, realName: string, email: string, role: string }} data
+ */
+export function createUser(data) {
+  return request({
+    url: '/api/admin/users',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新用户信息
+ * @param {number} id 用户ID
+ * @param {{ realName: string, email: string, role: string }} data
+ */
+export function updateUserByAdmin(id, data) {
+  return request({
+    url: `/api/admin/users/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除用户
+ * @param {number} id 用户ID
+ */
+export function deleteUser(id) {
+  return request({
+    url: `/api/admin/users/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 切换用户状态（启用/禁用）
+ * @param {number} id 用户ID
+ */
+export function toggleUserStatus(id) {
+  return request({
+    url: `/api/admin/users/${id}/toggle-status`,
+    method: 'put'
+  })
+}
