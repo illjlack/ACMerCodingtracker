@@ -181,7 +181,7 @@ INSERT INTO `user` (
     avatar,
     active
 ) VALUES (
-    'admin',
+    'super_admin',
     '$10$35yDDNSm6g6KdkPCbtTMfe/tFY6YQepZnSxwXIFxlTqltfQj1DTy6', -- 123456的加密
     '系统管理员',
     '3379782451@qq.com',

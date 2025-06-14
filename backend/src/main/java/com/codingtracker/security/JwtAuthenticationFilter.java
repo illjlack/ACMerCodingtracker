@@ -2,12 +2,15 @@ package com.codingtracker.security;
 
 import com.codingtracker.service.TokenBlacklistCache;
 import com.codingtracker.util.JwtUtils;
+import com.codingtracker.repository.UserRepository;
+import com.codingtracker.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -20,16 +23,21 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final TokenBlacklistCache tokenBlacklistCache;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // 构造器注入
-    public JwtAuthenticationFilter(TokenBlacklistCache tokenBlacklistCache) {
+    public JwtAuthenticationFilter(TokenBlacklistCache tokenBlacklistCache, UserRepository userRepository) {
         this.tokenBlacklistCache = tokenBlacklistCache;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -54,9 +62,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 String username = claimsJws.getBody().getSubject();
 
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(username,
-                        null, null);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                // 从数据库查询用户角色信息
+                Optional<User> userOpt = userRepository.findByUsername(username);
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+
+                    // 将用户角色转换为Spring Security的权限格式
+                    List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.name()))
+                            .collect(Collectors.toList());
+
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            username, null, authorities);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    logger.warn("User not found: " + username);
+                    sendUnauthorizedResponse(response, "用户不存在，请重新登录");
+                    return;
+                }
 
             } catch (JwtException e) {
                 logger.error("Invalid JWT token", e);

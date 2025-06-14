@@ -92,18 +92,6 @@ export const constantRoutes = [
     ]
   },
   {
-    path: '/userManagement',
-    component: Layout,
-    children: [
-      {
-        path: '',
-        component: () => import('@/views/userManagement/index'),
-        name: 'UserManagement',
-        meta: { title: '用户管理', icon: 'user', noCache: true }
-      }
-    ]
-  },
-  {
     path: '/userPbInfo/:name',
     component: Layout,
     hidden: true,
@@ -166,6 +154,24 @@ export const constantRoutes = [
 ]
 
 export const asyncRoutes = [
+  // 用户管理页面 - 需要管理员权限
+  {
+    path: '/userManagement',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/userManagement/index'),
+        name: 'UserManagement',
+        meta: {
+          title: '用户管理',
+          icon: 'user',
+          noCache: true,
+          roles: ['ADMIN', 'SUPER_ADMIN'] // 只允许管理员和超级管理员访问
+        }
+      }
+    ]
+  }
   // 个人做题信息页：可选传参 userId
   // {
   //   path: '/userPbInfo',

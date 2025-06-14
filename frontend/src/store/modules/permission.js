@@ -75,7 +75,8 @@ const actions = {
   generateRoutes({ commit }, roles) {
     return new Promise(resolve => {
       let accessedRoutes
-      if (roles.includes('admin')) {
+      // 检查是否有管理员权限（包括ADMIN和SUPER_ADMIN）
+      if (roles.includes('ADMIN') || roles.includes('SUPER_ADMIN')) {
         accessedRoutes = asyncRoutes || []
       } else {
         accessedRoutes = filterAsyncRoutes(asyncRoutes, roles)

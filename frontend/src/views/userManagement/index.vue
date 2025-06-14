@@ -28,19 +28,19 @@
         </el-option>
       </el-select>
 
-      <el-button type="primary" icon="el-icon-plus" @click="handleAdd">
+      <el-button v-if="isAdmin" type="primary" icon="el-icon-plus" @click="handleAdd">
         添加用户
       </el-button>
 
-      <el-button type="info" icon="el-icon-collection-tag" @click="handleTagManagement">
+      <el-button v-if="isAdmin" type="info" icon="el-icon-collection-tag" @click="handleTagManagement">
         标签管理
       </el-button>
 
-      <el-button type="success" icon="el-icon-upload2" @click="showImportDialog">
+      <el-button v-if="isAdmin" type="success" icon="el-icon-upload2" @click="showImportDialog">
         批量导入
       </el-button>
 
-      <user-export />
+      <user-export v-if="isAdmin" />
     </div>
 
     <div class="table-wrapper">
@@ -228,7 +228,7 @@
     >
       <div class="tag-management">
         <div class="tag-controls">
-          <el-button type="primary" icon="el-icon-plus" @click="handleAddTag">
+          <el-button v-if="isAdmin" type="primary" icon="el-icon-plus" @click="handleAddTag">
             新建标签
           </el-button>
         </div>
@@ -248,8 +248,8 @@
           </el-table-column>
           <el-table-column label="操作" width="150">
             <template #default="{ row }">
-              <el-button size="mini" type="primary" @click="handleEditTag(row)">编辑</el-button>
-              <el-button size="mini" type="danger" @click="handleDeleteTag(row)">删除</el-button>
+              <el-button v-if="isAdmin" size="mini" type="primary" @click="handleEditTag(row)">编辑</el-button>
+              <el-button v-if="isAdmin" size="mini" type="danger" @click="handleDeleteTag(row)">删除</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -430,10 +430,10 @@ export default {
     },
 
     /**
-     * 当前登录用户是否是管理员（非超级管理员）
+     * 当前登录用户是否是管理员（包括超级管理员）
      */
     isAdmin() {
-      return this.roles.includes('ADMIN')
+      return this.roles.includes('ADMIN') || this.roles.includes('SUPER_ADMIN')
     }
   },
   created() {

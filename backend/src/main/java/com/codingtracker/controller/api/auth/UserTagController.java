@@ -19,7 +19,7 @@ import java.util.Set;
  */
 @RestController
 @RequestMapping("/api/admin/user-tags")
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
 public class UserTagController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserTagController.class);
