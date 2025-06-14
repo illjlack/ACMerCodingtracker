@@ -1,11 +1,11 @@
 <template>
-  <div class="user-export">
+  <div class="problem-export">
     <el-dropdown trigger="click" @command="handleExport">
       <el-button
         type="primary"
         :loading="exporting"
       >
-        <i class="el-icon-download" /> 导出用户数据
+        <i class="el-icon-download" /> 导出题目数据
         <i class="el-icon-arrow-down el-icon--right" />
       </el-button>
       <el-dropdown-menu slot="dropdown">
@@ -22,10 +22,10 @@ import * as XLSX from 'xlsx'
 import { saveAs } from 'file-saver'
 
 export default {
-  name: 'UserExport',
+  name: 'ProblemExport',
   props: {
-    // 传入要导出的用户数据
-    userData: {
+    // 传入要导出的题目数据
+    problemData: {
       type: Array,
       default: () => []
     },
@@ -42,7 +42,7 @@ export default {
   },
   methods: {
     async handleExport(format) {
-      if (this.userData.length === 0) {
+      if (this.problemData.length === 0) {
         this.$message.warning('没有可导出的数据')
         return
       }
@@ -76,29 +76,17 @@ export default {
     },
 
     prepareExportData() {
-      return this.userData.map(user => ({
-        '用户名': user.username,
-        '真实姓名': user.realName,
-        '邮箱': user.email,
-        '专业': user.major,
-        '角色': this.formatRoles(user),
-        '状态': user.active ? '正常' : '禁用',
-        'OJ账号': this.formatOjAccounts(user.ojAccounts),
-        '标签': this.formatTags(user.tags),
-        '创建时间': user.createTime ? new Date(user.createTime).toLocaleString() : '',
-        '最后登录': user.lastLoginTime ? new Date(user.lastLoginTime).toLocaleString() : ''
+      return this.problemData.map(problem => ({
+        'OJ平台': problem.ojName,
+        '题目ID': problem.pid,
+        '题目名称': problem.name,
+        '类型': problem.type || 'PROGRAMMING',
+        '难度分': problem.points || '',
+        '链接': problem.url || '',
+        '标签': this.formatTags(problem.tags),
+        '创建时间': problem.createTime ? new Date(problem.createTime).toLocaleString() : '',
+        '更新时间': problem.updateTime ? new Date(problem.updateTime).toLocaleString() : ''
       }))
-    },
-
-    formatRoles(user) {
-      if (user.superAdmin) return '超级管理员'
-      if (user.admin) return '管理员'
-      return '普通用户'
-    },
-
-    formatOjAccounts(ojAccounts) {
-      if (!ojAccounts || ojAccounts.length === 0) return ''
-      return ojAccounts.map(account => `${account.platform}:${account.accountName}`).join('; ')
     },
 
     formatTags(tags) {
@@ -111,25 +99,24 @@ export default {
         // 创建工作簿
         const ws = XLSX.utils.json_to_sheet(data)
         const wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(wb, ws, '用户数据')
+        XLSX.utils.book_append_sheet(wb, ws, '题目数据')
 
         // 设置列宽
         const colWidths = [
-          { wch: 15 }, // 用户名
-          { wch: 15 }, // 真实姓名
-          { wch: 25 }, // 邮箱
-          { wch: 20 }, // 专业
-          { wch: 12 }, // 角色
-          { wch: 8 }, // 状态
-          { wch: 30 }, // OJ账号
-          { wch: 20 }, // 标签
+          { wch: 12 }, // OJ平台
+          { wch: 15 }, // 题目ID
+          { wch: 30 }, // 题目名称
+          { wch: 12 }, // 类型
+          { wch: 10 }, // 难度分
+          { wch: 40 }, // 链接
+          { wch: 25 }, // 标签
           { wch: 20 }, // 创建时间
-          { wch: 20 } // 最后登录
+          { wch: 20 } // 更新时间
         ]
         ws['!cols'] = colWidths
 
         // 生成文件并下载
-        XLSX.writeFile(wb, `用户数据_${new Date().toISOString().slice(0, 10)}.xlsx`)
+        XLSX.writeFile(wb, `题目数据_${new Date().toISOString().slice(0, 10)}.xlsx`)
       } catch (error) {
         throw new Error('Excel导出失败: ' + error.message)
       }
@@ -157,7 +144,7 @@ export default {
         const BOM = '\uFEFF'
         const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' })
 
-        saveAs(blob, `用户数据_${new Date().toISOString().slice(0, 10)}.csv`)
+        saveAs(blob, `题目数据_${new Date().toISOString().slice(0, 10)}.csv`)
       } catch (error) {
         throw new Error('CSV导出失败: ' + error.message)
       }
@@ -169,14 +156,14 @@ export default {
         const jsonData = {
           exportTime: new Date().toISOString(),
           filters: this.filters,
-          totalCount: this.userData.length,
-          data: this.userData
+          totalCount: this.problemData.length,
+          data: this.problemData
         }
 
         const jsonString = JSON.stringify(jsonData, null, 2)
         const blob = new Blob([jsonString], { type: 'application/json;charset=utf-8' })
 
-        saveAs(blob, `用户数据_${new Date().toISOString().slice(0, 10)}.json`)
+        saveAs(blob, `题目数据_${new Date().toISOString().slice(0, 10)}.json`)
       } catch (error) {
         throw new Error('JSON导出失败: ' + error.message)
       }
@@ -186,7 +173,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.user-export {
+.problem-export {
   display: inline-block;
 
   .el-button {

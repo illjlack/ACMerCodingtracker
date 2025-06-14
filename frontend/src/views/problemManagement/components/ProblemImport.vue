@@ -1,5 +1,5 @@
 <template>
-  <div class="user-import">
+  <div class="problem-import">
     <el-upload
       ref="upload"
       class="upload-demo"
@@ -14,7 +14,7 @@
       <i class="el-icon-upload" />
       <div class="el-upload__text">将文件拖到此处，或<em>点击选择文件</em></div>
       <div slot="tip" class="el-upload__tip">
-        支持 Excel(.xlsx/.xls)、CSV、JSON 格式文件，且不超过 10MB
+        支持 Excel(.xlsx/.xls)、CSV、JSON 格式文件，且不超过 50MB
       </div>
     </el-upload>
 
@@ -48,24 +48,11 @@
     <div v-if="previewData.length > 0" class="preview-section">
       <h4>数据预览 (前5条记录)</h4>
       <el-table :data="previewData.slice(0, 5)" border size="mini" style="margin: 10px 0;">
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="realName" label="真实姓名" width="120" />
-        <el-table-column prop="email" label="邮箱" width="180" />
-        <el-table-column prop="major" label="专业" width="150" />
-        <el-table-column prop="roles" label="角色" width="100">
-          <template #default="{ row }">
-            <el-tag v-if="row.roles && row.roles.includes('ADMIN')" type="warning">管理员</el-tag>
-            <el-tag v-else type="info">普通用户</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="ojAccounts" label="OJ账号" width="150">
-          <template #default="{ row }">
-            <span v-if="row.ojAccounts && row.ojAccounts.length > 0">
-              {{ row.ojAccounts.length }}个账号
-            </span>
-            <span v-else class="text-muted">无</span>
-          </template>
-        </el-table-column>
+        <el-table-column prop="ojName" label="OJ平台" width="100" />
+        <el-table-column prop="pid" label="题目ID" width="120" />
+        <el-table-column prop="name" label="题目名称" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="type" label="类型" width="100" />
+        <el-table-column prop="points" label="难度分" width="80" />
         <el-table-column prop="tags" label="标签" width="120">
           <template #default="{ row }">
             <span v-if="row.tags && row.tags.length > 0">
@@ -74,14 +61,14 @@
             <span v-else class="text-muted">无</span>
           </template>
         </el-table-column>
-        <el-table-column prop="password" label="密码" width="100">
+        <el-table-column prop="url" label="链接" width="100">
           <template #default>
-            <span>******</span>
+            <span>有链接</span>
           </template>
         </el-table-column>
       </el-table>
       <p class="preview-info">
-        共解析到 <strong>{{ previewData.length }}</strong> 条用户数据
+        共解析到 <strong>{{ previewData.length }}</strong> 条题目数据
         <span v-if="errors.length > 0" style="color: #f56c6c;">
           ，发现 <strong>{{ errors.length }}</strong> 个错误
         </span>
@@ -105,10 +92,11 @@
 
 <script>
 import * as XLSX from 'xlsx'
-import { createUser, getOJPlatforms, getAllUserTags } from '@/api/user'
+import { batchUpdateProblems } from '@/api/problem'
+import { getAllTags as getAllProblemTags } from '@/api/tag'
 
 export default {
-  name: 'UserImport',
+  name: 'ProblemImport',
   data() {
     return {
       selectedFile: null,
@@ -118,18 +106,16 @@ export default {
       importStatus: null,
       previewData: [],
       errors: [],
-      allTags: [],
-      ojPlatforms: []
+      allTags: []
     }
   },
   created() {
     this.fetchTags()
-    this.fetchOJPlatforms()
   },
   methods: {
     async fetchTags() {
       try {
-        const res = await getAllUserTags()
+        const res = await getAllProblemTags()
         if (res.success) {
           this.allTags = res.data || []
         }
@@ -137,21 +123,10 @@ export default {
         console.error('获取标签列表失败:', error)
       }
     },
-
-    async fetchOJPlatforms() {
-      try {
-        const res = await getOJPlatforms()
-        if (res.success) {
-          this.ojPlatforms = res.data || []
-        }
-      } catch (error) {
-        console.error('获取OJ平台列表失败:', error)
-      }
-    },
     handleFileChange(file) {
       // 检查文件大小
-      if (file.size > 10 * 1024 * 1024) {
-        this.$message.error('文件大小不能超过 10MB!')
+      if (file.size > 50 * 1024 * 1024) {
+        this.$message.error('文件大小不能超过 50MB!')
         this.$refs.upload.clearFiles()
         return
       }
@@ -275,99 +250,51 @@ export default {
 
       rawData.forEach((row, index) => {
         const rowNum = index + 2 // Excel行号从2开始（第1行是表头）
-        const user = {}
+        const problem = {}
         const rowErrors = []
 
-        // 用户名验证
-        if (!row.username && !row['用户名']) {
-          rowErrors.push('用户名不能为空')
+        // OJ平台验证
+        if (!row.ojName && !row['OJ平台'] && !row['平台']) {
+          rowErrors.push('OJ平台不能为空')
         } else {
-          user.username = row.username || row['用户名']
-          if (user.username.length < 3 || user.username.length > 20) {
-            rowErrors.push('用户名长度应在3-20个字符之间')
-          }
-        }
-
-        // 真实姓名验证
-        if (!row.realName && !row['真实姓名'] && !row['姓名']) {
-          rowErrors.push('真实姓名不能为空')
-        } else {
-          user.realName = row.realName || row['真实姓名'] || row['姓名']
-        }
-
-        // 邮箱验证
-        if (!row.email && !row['邮箱']) {
-          rowErrors.push('邮箱不能为空')
-        } else {
-          user.email = row.email || row['邮箱']
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-          if (!emailRegex.test(user.email)) {
-            rowErrors.push('邮箱格式不正确')
-          }
-        }
-
-        // 专业
-        user.major = row.major || row['专业'] || ''
-        if (!user.major) {
-          rowErrors.push('专业不能为空')
-        }
-
-        // 密码
-        user.password = row.password || row['密码'] || '123456' // 默认密码
-        if (user.password.length < 6) {
-          rowErrors.push('密码长度不能少于6位')
-        }
-
-        // 角色
-        user.roles = ['USER'] // 默认普通用户
-
-        // 检查角色字段，但不允许设置超级管理员
-        const roleStr = row.role || row['角色'] || ''
-        if (roleStr) {
-          const role = roleStr.toUpperCase()
-          if (role === 'SUPER_ADMIN' || role === '超级管理员') {
-            rowErrors.push('不允许通过导入设置超级管理员角色')
-          } else if (role === 'ADMIN' || role === '管理员') {
-            user.roles = ['ADMIN']
+          problem.ojName = row.ojName || row['OJ平台'] || row['平台']
+          // 验证平台是否支持
+          const supportedPlatforms = ['CODEFORCES', 'LEETCODE', 'LUOGU', 'HDU', 'POJ']
+          if (!supportedPlatforms.includes(problem.ojName.toUpperCase())) {
+            rowErrors.push(`不支持的OJ平台: ${problem.ojName}`)
           } else {
-            user.roles = ['USER']
+            problem.ojName = problem.ojName.toUpperCase()
           }
         }
 
-        // 解析OJ账号 - 格式: "CODEFORCES:tourist; LEETCODE:petr"
-        user.ojAccounts = []
-        const ojAccountsStr = row.ojAccounts || row['OJ账号'] || row['oj账号'] || ''
-        if (ojAccountsStr) {
-          try {
-            const ojAccountPairs = ojAccountsStr.split(';').map(s => s.trim()).filter(s => s)
-            for (const pair of ojAccountPairs) {
-              if (pair.includes(':')) {
-                const [platform, accountName] = pair.split(':').map(s => s.trim())
-                if (platform && accountName) {
-                  // 验证平台是否支持
-                  const platformExists = this.ojPlatforms.some(p =>
-                    p.code.toUpperCase() === platform.toUpperCase()
-                  )
-                  if (platformExists) {
-                    user.ojAccounts.push({
-                      platform: platform.toUpperCase(),
-                      accountName: accountName
-                    })
-                  } else {
-                    rowErrors.push(`不支持的OJ平台: ${platform}`)
-                  }
-                }
-              } else {
-                rowErrors.push(`OJ账号格式错误: ${pair}，正确格式为"平台:账号名"`)
-              }
-            }
-          } catch (error) {
-            rowErrors.push('OJ账号解析失败')
+        // 题目ID验证
+        if (!row.pid && !row['题目ID'] && !row['ID']) {
+          rowErrors.push('题目ID不能为空')
+        } else {
+          problem.pid = String(row.pid || row['题目ID'] || row['ID'])
+        }
+
+        // 题目名称验证
+        if (!row.name && !row['题目名称'] && !row['名称']) {
+          rowErrors.push('题目名称不能为空')
+        } else {
+          problem.name = row.name || row['题目名称'] || row['名称']
+        }
+
+        // 可选字段
+        problem.type = row.type || row['类型'] || 'PROGRAMMING'
+        problem.points = row.points || row['难度分'] || row['分数'] || null
+        if (problem.points) {
+          problem.points = parseInt(problem.points)
+          if (isNaN(problem.points)) {
+            problem.points = null
           }
         }
 
-        // 解析标签 - 格式: "算法,数据结构,动态规划"
-        user.tags = []
+        problem.url = row.url || row['链接'] || row['URL'] || ''
+
+        // 解析标签 - 格式: "数学,图论,动态规划"
+        problem.tags = []
         const tagsStr = row.tags || row['标签'] || ''
         if (tagsStr) {
           try {
@@ -375,7 +302,7 @@ export default {
             for (const tagName of tagNames) {
               const existingTag = this.allTags.find(t => t.name === tagName)
               if (existingTag) {
-                user.tags.push(existingTag.id)
+                problem.tags.push(existingTag.id)
               } else {
                 rowErrors.push(`标签不存在: ${tagName}`)
               }
@@ -391,7 +318,7 @@ export default {
             message: rowErrors.join('; ')
           })
         } else {
-          validData.push(user)
+          validData.push(problem)
         }
       })
 
@@ -401,7 +328,7 @@ export default {
       if (errors.length > 0) {
         this.$message.warning(`数据解析完成，发现 ${errors.length} 个错误，请检查后重新上传`)
       } else {
-        this.$message.success(`数据解析成功，共 ${validData.length} 条用户数据`)
+        this.$message.success(`数据解析成功，共 ${validData.length} 条题目数据`)
       }
     },
 
@@ -418,7 +345,7 @@ export default {
 
       try {
         await this.$confirm(
-          `确认导入 ${this.previewData.length} 条用户数据吗？`,
+          `确认导入 ${this.previewData.length} 条题目数据吗？`,
           '确认导入',
           {
             confirmButtonText: '确定',
@@ -431,49 +358,22 @@ export default {
         this.importProgress = 0
         this.importStatus = null
 
-        let successCount = 0
-        let failCount = 0
-        const failedUsers = []
-
-        for (let i = 0; i < this.previewData.length; i++) {
-          try {
-            await createUser(this.previewData[i])
-            successCount++
-          } catch (error) {
-            failCount++
-            failedUsers.push({
-              username: this.previewData[i].username,
-              error: error.response?.data?.message || error.message
-            })
-          }
-
-          // 更新进度
-          this.importProgress = Math.round(((i + 1) / this.previewData.length) * 100)
+        // 批量创建题目
+        try {
+          await batchUpdateProblems(this.previewData)
+          this.importProgress = 100
+          this.importStatus = 'success'
+          this.$message.success(`题目导入成功！共导入 ${this.previewData.length} 个题目`)
+          this.$emit('import-success', {
+            successCount: this.previewData.length,
+            failCount: 0
+          })
+          this.clearFile()
+        } catch (error) {
+          this.importStatus = 'exception'
+          console.error('导入失败:', error)
+          this.$message.error('导入失败: ' + (error.response?.data?.message || error.message))
         }
-
-        this.importStatus = failCount === 0 ? 'success' : 'warning'
-
-        // 显示结果
-        if (failCount === 0) {
-          this.$message.success(`导入成功！共导入 ${successCount} 个用户`)
-        } else {
-          this.$message.warning(`导入完成！成功 ${successCount} 个，失败 ${failCount} 个`)
-
-          // 显示失败详情
-          if (failedUsers.length > 0) {
-            const failedInfo = failedUsers.slice(0, 5).map(u =>
-              `${u.username}: ${u.error}`
-            ).join('\n')
-            this.$alert(
-              failedInfo + (failedUsers.length > 5 ? '\n...' : ''),
-              '导入失败详情',
-              { type: 'warning' }
-            )
-          }
-        }
-
-        this.$emit('import-success', { successCount, failCount })
-        this.clearFile()
       } catch (error) {
         if (error !== 'cancel') {
           console.error('导入失败:', error)
@@ -489,40 +389,44 @@ export default {
       this.downloading = true
       try {
         // 生成标签示例
-        const tagExamples = this.allTags.slice(0, 3).map(tag => tag.name).join(',') || '算法,数据结构,动态规划'
+        const tagExamples = this.allTags.slice(0, 3).map(tag => tag.name).join(',') || '数学,图论,动态规划'
 
-        // 生成OJ平台示例
-        this.ojPlatforms.slice(0, 2).map(p => p.code).join('; ') || 'CODEFORCES; LEETCODE'
-
+        // 创建模板数据
         const templateData = [
           {
-            '用户名': 'user001',
-            '真实姓名': '张三',
-            '邮箱': 'zhangsan@example.com',
-            '专业': '计算机科学与技术',
-            '密码': '123456',
-            '角色': 'USER',
-            'OJ账号': 'CODEFORCES:tourist; LEETCODE:zhangsan',
+            'OJ平台': 'CODEFORCES',
+            '题目ID': '1A',
+            '题目名称': 'Theatre Square',
+            '类型': 'PROGRAMMING',
+            '难度分': 800,
+            '链接': 'https://codeforces.com/problem/1/A',
             '标签': tagExamples
           },
           {
-            '用户名': 'user002',
-            '真实姓名': '李四',
-            '邮箱': 'lisi@example.com',
-            '专业': '软件工程',
-            '密码': '123456',
-            '角色': 'ADMIN',
-            'OJ账号': 'LUOGU:lisi2024',
-            '标签': this.allTags.slice(1, 3).map(tag => tag.name).join(',') || '编程,竞赛'
+            'OJ平台': 'LEETCODE',
+            '题目ID': '1',
+            '题目名称': 'Two Sum',
+            '类型': 'PROGRAMMING',
+            '难度分': 1000,
+            '链接': 'https://leetcode.com/problems/two-sum/',
+            '标签': this.allTags.slice(1, 4).map(tag => tag.name).join(',') || '哈希表,数组'
           },
           {
-            '用户名': 'user003',
-            '真实姓名': '王五',
-            '邮箱': 'wangwu@example.com',
-            '专业': '信息安全',
-            '密码': '123456',
-            '角色': 'USER',
-            'OJ账号': '',
+            'OJ平台': 'LUOGU',
+            '题目ID': 'P1000',
+            '题目名称': '超级玛丽游戏',
+            '类型': 'PROGRAMMING',
+            '难度分': 100,
+            '链接': 'https://www.luogu.com.cn/problem/P1000',
+            '标签': '入门,模拟'
+          },
+          {
+            'OJ平台': 'HDU',
+            '题目ID': '1000',
+            '题目名称': 'A + B Problem',
+            '类型': 'PROGRAMMING',
+            '难度分': 500,
+            '链接': 'http://acm.hdu.edu.cn/showproblem.php?pid=1000',
             '标签': ''
           }
         ]
@@ -530,34 +434,28 @@ export default {
         // 创建工作簿
         const ws = XLSX.utils.json_to_sheet(templateData)
         const wb = XLSX.utils.book_new()
-        XLSX.utils.book_append_sheet(wb, ws, '用户数据')
+        XLSX.utils.book_append_sheet(wb, ws, '题目数据')
 
         // 设置列宽
         const colWidths = [
-          { wch: 12 }, // 用户名
-          { wch: 15 }, // 真实姓名
-          { wch: 25 }, // 邮箱
-          { wch: 20 }, // 专业
-          { wch: 8 }, // 密码
-          { wch: 10 }, // 角色
-          { wch: 35 }, // OJ账号
+          { wch: 12 }, // OJ平台
+          { wch: 15 }, // 题目ID
+          { wch: 25 }, // 题目名称
+          { wch: 12 }, // 类型
+          { wch: 10 }, // 难度分
+          { wch: 40 }, // 链接
           { wch: 25 } // 标签
         ]
         ws['!cols'] = colWidths
 
         // 添加说明信息
-        if (!ws['!merges']) ws['!merges'] = []
-
-        // 在第5行添加说明
-        const descRow = 5
-        ws[`A${descRow}`] = { v: '角色说明: USER(普通用户) 或 ADMIN(管理员)，不支持SUPER_ADMIN', t: 's' }
-        ws[`A${descRow + 1}`] = { v: 'OJ账号格式说明: 平台:账号名; 平台:账号名 (多个账号用分号分隔)', t: 's' }
-        ws[`A${descRow + 2}`] = { v: `支持的平台: ${this.ojPlatforms.map(p => p.code).join(', ')}`, t: 's' }
-        ws[`A${descRow + 3}`] = { v: '标签格式说明: 标签1,标签2,标签3 (多个标签用逗号分隔)', t: 's' }
-        ws[`A${descRow + 4}`] = { v: `可用标签: ${this.allTags.map(t => t.name).join(', ')}`, t: 's' }
+        const descRow = 6
+        ws[`A${descRow}`] = { v: '支持的OJ平台: CODEFORCES, LEETCODE, LUOGU, HDU, POJ', t: 's' }
+        ws[`A${descRow + 1}`] = { v: '标签格式说明: 标签1,标签2,标签3 (多个标签用逗号分隔)', t: 's' }
+        ws[`A${descRow + 2}`] = { v: `可用标签: ${this.allTags.map(t => t.name).join(', ')}`, t: 's' }
 
         // 下载文件
-        XLSX.writeFile(wb, `用户导入模板_${new Date().toISOString().slice(0, 10)}.xlsx`)
+        XLSX.writeFile(wb, `题目导入模板_${new Date().toISOString().slice(0, 10)}.xlsx`)
 
         this.$message.success('模板下载成功')
       } catch (error) {
@@ -572,7 +470,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.user-import {
+.problem-import {
   padding: 20px;
 
   .upload-demo {

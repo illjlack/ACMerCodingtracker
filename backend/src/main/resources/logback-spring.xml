@@ -6,6 +6,9 @@
     <!-- 定义日志格式 -->
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n" />
     
+    <!-- 定义错误日志格式（不包含堆栈信息） -->
+    <property name="ERROR_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n" />
+    
     <!-- 控制台输出 -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -35,7 +38,7 @@
         </encoder>
     </appender>
     
-    <!-- 错误日志文件输出 -->
+    <!-- 错误日志文件输出（简化格式，不包含堆栈信息） -->
     <appender name="FILE_ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/error.log</file>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -50,10 +53,46 @@
                 <maxFileSize>50MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+    
+    <!-- 爬虫日志文件输出 -->
+    <appender name="FILE_CRAWLER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/crawler.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/crawler.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>15</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>50MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
         <encoder>
             <pattern>${LOG_PATTERN}</pattern>
             <charset>UTF-8</charset>
         </encoder>
+    </appender>
+    
+    <!-- 爬虫错误日志文件输出（简化格式，去除堆栈信息） -->
+    <appender name="FILE_CRAWLER_ERROR_SIMPLE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_HOME}/crawler-error-simple.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_HOME}/crawler-error-simple.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>50MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
+        </layout>
     </appender>
     
     <!-- 控制器日志单独输出 -->
@@ -102,6 +141,15 @@
         <appender-ref ref="FILE_ALL" />
         <appender-ref ref="FILE_SERVICE" />
         <appender-ref ref="FILE_ERROR" />
+    </logger>
+    
+    <!-- 爬虫包的日志配置 -->
+    <logger name="com.codingtracker.crawler" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE_ALL" />
+        <appender-ref ref="FILE_CRAWLER" />
+        <appender-ref ref="FILE_ERROR" />
+        <appender-ref ref="FILE_CRAWLER_ERROR_SIMPLE" />
     </logger>
     
     <!-- SQL日志配置 -->

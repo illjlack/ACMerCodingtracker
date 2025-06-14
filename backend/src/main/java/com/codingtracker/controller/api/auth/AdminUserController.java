@@ -56,6 +56,15 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<User>> createUser(@RequestBody UserCreateRequest request) {
         logger.info("管理员请求创建用户: 用户名={}", request.getUsername());
         try {
+            // 验证超级管理员唯一性
+            userService.validateSuperAdminUniqueness();
+
+            // 检查是否试图创建超级管理员
+            if (request.getRoles() != null && request.getRoles().contains(User.Type.SUPER_ADMIN)) {
+                logger.warn("尝试创建超级管理员用户被拒绝: 用户名={}", request.getUsername());
+                return ResponseEntity.ok(ApiResponse.error("不允许创建超级管理员用户"));
+            }
+
             User createdUser = userService.createUserFromRequest(request);
 
             // 处理标签设置
@@ -79,6 +88,21 @@ public class AdminUserController {
         logger.info("管理员请求更新用户: 操作者={}, 目标用户ID={}", currentUsername, id);
 
         try {
+            // 验证超级管理员唯一性
+            userService.validateSuperAdminUniqueness();
+
+            // 检查是否试图设置超级管理员角色
+            if (request.getRoles() != null && request.getRoles().contains(User.Type.SUPER_ADMIN)) {
+                logger.warn("尝试设置超级管理员角色被拒绝: 操作者={}, 目标用户ID={}", currentUsername, id);
+                return ResponseEntity.ok(ApiResponse.error("不允许设置超级管理员角色"));
+            }
+
+            // 检查是否有权限编辑目标用户
+            if (!userService.canEditUser(currentUsername, id)) {
+                logger.warn("用户更新权限不足: 操作者={}, 目标用户ID={}", currentUsername, id);
+                return ResponseEntity.ok(ApiResponse.error("权限不足：无法编辑该用户"));
+            }
+
             User updatedUser = userService.updateUserByAdminFromRequest(id, request, currentUsername);
 
             // 处理标签设置

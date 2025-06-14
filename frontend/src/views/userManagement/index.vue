@@ -40,7 +40,18 @@
         批量导入
       </el-button>
 
-      <user-export v-if="isAdmin" />
+      <user-export v-if="isAdmin" :user-data="displayList" :filters="exportFilters" />
+    </div>
+
+    <!-- 安全提示 -->
+    <div v-if="getSuperAdminCount() > 1" class="security-warning">
+      <el-alert
+        title="安全警告"
+        :description="`系统中存在 ${getSuperAdminCount()} 个超级管理员，建议只保留一个超级管理员以确保系统安全。`"
+        type="error"
+        show-icon
+        :closable="false"
+      />
     </div>
 
     <div class="table-wrapper">
@@ -80,9 +91,14 @@
         </el-table-column>
         <el-table-column prop="roles" label="角色" min-width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.superAdmin" type="danger">超级管理员</el-tag>
+            <el-tag v-if="row.superAdmin" type="danger">
+              <i class="el-icon-star-on" /> 超级管理员
+            </el-tag>
             <el-tag v-else-if="row.admin" type="warning">管理员</el-tag>
             <el-tag v-else type="info">普通用户</el-tag>
+            <el-tooltip v-if="row.superAdmin" content="超级管理员拥有最高权限，不能被编辑或删除" placement="top">
+              <i class="el-icon-warning-outline" style="margin-left: 5px; color: #f56c6c;" />
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column prop="active" label="状态" min-width="100">
@@ -434,6 +450,16 @@ export default {
      */
     isAdmin() {
       return this.roles.includes('ADMIN') || this.roles.includes('SUPER_ADMIN')
+    },
+
+    /**
+     * 导出筛选条件
+     */
+    exportFilters() {
+      return {
+        search: this.search,
+        selectedTags: this.selectedTags
+      }
     }
   },
   created() {
@@ -638,6 +664,21 @@ export default {
         await this.$refs.userForm.validate()
         const data = { ...this.userForm }
 
+        // 超级管理员角色验证
+        if (data.role === 'SUPER_ADMIN') {
+          this.$message.error('不能设置超级管理员角色')
+          return
+        }
+
+        // 如果正在编辑用户，检查是否试图修改超级管理员
+        if (this.isEdit) {
+          const originalUser = this.list.find(u => u.id === data.id)
+          if (originalUser && originalUser.superAdmin) {
+            this.$message.error('不能修改超级管理员用户')
+            return
+          }
+        }
+
         // 将单个角色转换为角色数组
         data.roles = [data.role]
         delete data.role
@@ -807,12 +848,17 @@ export default {
         return false
       }
 
-      // 如果当前用户是超级管理员，可以编辑任何人
+      // 超级管理员不能编辑其他超级管理员
+      if (user.superAdmin) {
+        return false
+      }
+
+      // 如果当前用户是超级管理员，可以编辑普通管理员和普通用户
       if (this.isSuperAdmin) {
         return true
       }
 
-      // 如果当前用户是管理员，可以编辑普通用户，但不能编辑其他管理员或超级管理员
+      // 如果当前用户是管理员，可以编辑普通用户，但不能编辑其他管理员
       if (this.isAdmin) {
         return !user.admin && !user.superAdmin
       }
@@ -829,12 +875,17 @@ export default {
         return false
       }
 
-      // 超级管理员可以删除任何人（除了自己）
+      // 超级管理员不能被删除
+      if (user.superAdmin) {
+        return false
+      }
+
+      // 超级管理员可以删除普通管理员和普通用户
       if (this.isSuperAdmin) {
         return true
       }
 
-      // 管理员可以删除普通用户（但不能删除其他管理员或超级管理员）
+      // 管理员可以删除普通用户（但不能删除其他管理员）
       if (this.isAdmin) {
         return !user.admin && !user.superAdmin
       }
@@ -843,18 +894,37 @@ export default {
       return false
     },
     canSetRole(role) {
-      // 超级管理员可以设置所有角色
-      if (this.isSuperAdmin) {
-        return true
+      // 超级管理员角色只能有一个，任何人都不能设置
+      if (role === 'SUPER_ADMIN') {
+        return false
       }
 
-      // 普通管理员不能设置管理员或超级管理员角色
+      // 超级管理员可以设置管理员和普通用户角色
+      if (this.isSuperAdmin) {
+        return role === 'ADMIN' || role === 'USER'
+      }
+
+      // 普通管理员只能设置普通用户角色
       if (this.isAdmin && !this.isSuperAdmin) {
         return role === 'USER'
       }
 
       // 非管理员不能设置任何角色
       return false
+    },
+
+    /**
+     * 检查是否已存在超级管理员
+     */
+    hasSuperAdmin() {
+      return this.list.some(user => user.superAdmin)
+    },
+
+    /**
+     * 获取超级管理员数量
+     */
+    getSuperAdminCount() {
+      return this.list.filter(user => user.superAdmin).length
     }
   }
 }
@@ -900,6 +970,15 @@ export default {
         border-color: #f56c6c !important;
         box-shadow: 0 0 0 2px rgba(245, 108, 108, 0.2) !important;
       }
+    }
+  }
+
+  .security-warning {
+    margin-bottom: 20px;
+
+    .el-alert {
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(245, 108, 108, 0.2);
     }
   }
 

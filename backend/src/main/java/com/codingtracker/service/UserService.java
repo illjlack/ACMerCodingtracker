@@ -311,6 +311,11 @@ public class UserService {
             throw new RuntimeException("Email already exists");
         }
 
+        // 验证超级管理员角色：不允许通过API创建超级管理员
+        if (user.getRoles() != null && user.getRoles().contains(User.Type.SUPER_ADMIN)) {
+            throw new RuntimeException("不允许创建超级管理员用户");
+        }
+
         // 设置默认值
         user.setActive(true);
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
@@ -551,16 +556,21 @@ public class UserService {
             throw new RuntimeException("权限不足：只有管理员才能执行此操作");
         }
 
+        // 禁止编辑超级管理员用户
+        if (isTargetSuperAdmin) {
+            throw new RuntimeException("权限不足：超级管理员用户不能被编辑");
+        }
+
+        // 禁止设置超级管理员角色
+        if (updateData.getRoles() != null && updateData.getRoles().contains(User.Type.SUPER_ADMIN)) {
+            throw new RuntimeException("权限不足：不允许设置超级管理员角色");
+        }
+
         // 如果当前用户是普通管理员
         if (isCurrentAdmin && !isCurrentSuperAdmin) {
-            // 不能编辑其他管理员或超级管理员
-            if (isTargetAdmin || isTargetSuperAdmin) {
-                throw new RuntimeException("权限不足：管理员不能编辑其他管理员或超级管理员");
-            }
-
-            // 不能设置超级管理员角色
-            if (updateData.getRoles() != null && updateData.getRoles().contains(User.Type.SUPER_ADMIN)) {
-                throw new RuntimeException("权限不足：管理员不能设置超级管理员角色");
+            // 不能编辑其他管理员
+            if (isTargetAdmin) {
+                throw new RuntimeException("权限不足：管理员不能编辑其他管理员");
             }
 
             // 不能设置管理员角色
@@ -585,14 +595,19 @@ public class UserService {
             boolean isTargetAdmin = targetUser.isAdmin();
             boolean isTargetSuperAdmin = targetUser.isSuperAdmin();
 
-            // 超级管理员可以编辑所有用户
+            // 超级管理员不能被编辑
+            if (isTargetSuperAdmin) {
+                return false;
+            }
+
+            // 超级管理员可以编辑普通管理员和普通用户
             if (isCurrentSuperAdmin) {
                 return true;
             }
 
-            // 普通管理员不能编辑管理员或超级管理员
+            // 普通管理员不能编辑管理员
             if (isCurrentAdmin && !isCurrentSuperAdmin) {
-                return !isTargetAdmin && !isTargetSuperAdmin;
+                return !isTargetAdmin;
             }
 
             // 非管理员不能编辑任何用户
@@ -606,8 +621,37 @@ public class UserService {
      * 检查用户是否可以被当前管理员删除
      */
     public boolean canDeleteUser(String currentUsername, Integer targetUserId) {
-        // 删除权限与编辑权限相同
-        return canEditUser(currentUsername, targetUserId);
+        try {
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new RuntimeException("Current user not found"));
+            User targetUser = userRepository.findById(targetUserId)
+                    .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+            boolean isCurrentSuperAdmin = currentUser.isSuperAdmin();
+            boolean isCurrentAdmin = currentUser.isAdmin();
+            boolean isTargetAdmin = targetUser.isAdmin();
+            boolean isTargetSuperAdmin = targetUser.isSuperAdmin();
+
+            // 超级管理员不能被删除
+            if (isTargetSuperAdmin) {
+                return false;
+            }
+
+            // 超级管理员可以删除普通管理员和普通用户
+            if (isCurrentSuperAdmin) {
+                return true;
+            }
+
+            // 普通管理员不能删除管理员
+            if (isCurrentAdmin && !isCurrentSuperAdmin) {
+                return !isTargetAdmin;
+            }
+
+            // 非管理员不能删除任何用户
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     /**
@@ -750,5 +794,32 @@ public class UserService {
 
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
+    }
+
+    /**
+     * 检查系统中是否已存在超级管理员
+     */
+    public boolean hasSuperAdmin() {
+        return userRepository.findAll().stream()
+                .anyMatch(User::isSuperAdmin);
+    }
+
+    /**
+     * 获取超级管理员数量
+     */
+    public long getSuperAdminCount() {
+        return userRepository.findAll().stream()
+                .filter(User::isSuperAdmin)
+                .count();
+    }
+
+    /**
+     * 验证超级管理员的唯一性
+     */
+    public void validateSuperAdminUniqueness() {
+        long count = getSuperAdminCount();
+        if (count > 1) {
+            throw new RuntimeException("系统错误：存在多个超级管理员，请联系系统管理员");
+        }
     }
 }

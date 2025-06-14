@@ -26,9 +26,12 @@ public class UserTryController {
 
     private static final Logger logger = LoggerFactory.getLogger(UserTryController.class);
 
-    @Autowired private ExtOjService extOjService;
-    @Autowired private UserService userService;
-    @Autowired private UserTryProblemService userTryProblemService;
+    @Autowired
+    private ExtOjService extOjService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private UserTryProblemService userTryProblemService;
 
     /**
      * 获取指定用户的所有尝试记录（分页）
@@ -37,8 +40,9 @@ public class UserTryController {
     public ApiResponse<Map<String, Object>> list(
             @PathVariable String username,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
-    ) {
+            @RequestParam(defaultValue = "20") int size) {
+        logger.info("开始查询用户 {} 的尝试记录，页码：{}，大小：{}", username, page, size);
+
         Optional<User> userOpt = userService.getUserByUsername(username);
         if (userOpt.isEmpty()) {
             logger.warn("用户不存在：{}", username);
@@ -51,9 +55,9 @@ public class UserTryController {
         Map<String, Object> data = Map.of(
                 "username", username,
                 "items", pageResult.getContent(),
-                "total", pageResult.getTotalElements()
-        );
+                "total", pageResult.getTotalElements());
 
+        logger.info("成功查询用户 {} 的尝试记录，共 {} 条", username, pageResult.getTotalElements());
         return ApiResponse.ok("查询成功", data);
     }
 
@@ -63,6 +67,8 @@ public class UserTryController {
     @PostMapping("/updatedb")
     public ApiResponse<Void> updatedb() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        logger.info("用户 {} 请求更新数据库", username);
+
         Optional<User> userOpt = userService.getUserByUsername(username);
         if (userOpt.isEmpty()) {
             logger.warn("尝试更新失败，未登录用户：{}", username);
@@ -71,6 +77,7 @@ public class UserTryController {
 
         logger.info("管理员 {} 触发了所有用户尝试记录的刷新", username);
         extOjService.flushTriesDB();
+        logger.info("数据库更新任务已启动，用户：{}", username);
 
         return ApiResponse.ok("开始更新，这需要几分钟", null);
     }
@@ -83,7 +90,9 @@ public class UserTryController {
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
 
+        logger.info("开始查询尝试记录统计，时间范围：{} 至 {}", start, end);
         List<?> data = userTryProblemService.getTryCounts(start, end);
+        logger.info("成功查询尝试记录统计，返回 {} 条记录", data.size());
         return ApiResponse.ok("查询成功", data);
     }
 
@@ -95,7 +104,9 @@ public class UserTryController {
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
 
+        logger.info("开始查询AC记录统计，时间范围：{} 至 {}", start, end);
         List<?> data = userTryProblemService.getAcCounts(start, end);
+        logger.info("成功查询AC记录统计，返回 {} 条记录", data.size());
         return ApiResponse.ok("查询成功", data);
     }
 
@@ -105,16 +116,18 @@ public class UserTryController {
     @PostMapping("/stats/rebuild")
     public ApiResponse<Void> manualRebuild() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        logger.info("用户 {} 请求手动重建系统数据", username);
+
         Optional<User> userOpt = userService.getUserByUsername(username);
         if (userOpt.isEmpty()) {
             logger.warn("未登录用户尝试重建：{}", username);
             return ApiResponse.error("您没有登录");
         }
 
-//        if (!userOpt.get().isAdmin()) {
-//            logger.warn("非管理员用户尝试触发系统重建：{}", username);
-//            return ApiResponse.error("权限不足，仅管理员可操作");
-//        }
+        // if (!userOpt.get().isAdmin()) {
+        // logger.warn("非管理员用户尝试触发系统重建：{}", username);
+        // return ApiResponse.error("权限不足，仅管理员可操作");
+        // }
 
         if (extOjService.isUpdating()) {
             logger.warn("当前已有更新进行中，用户 {} 的重建请求被拒绝", username);
@@ -137,6 +150,8 @@ public class UserTryController {
     @PostMapping("/stats/force-rebuild")
     public ApiResponse<Void> forceRebuild() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        logger.info("用户 {} 请求强制重建数据", username);
+
         Optional<User> userOpt = userService.getUserByUsername(username);
         if (userOpt.isEmpty() || !userOpt.get().isAdmin()) {
             logger.warn("非管理员或未登录用户尝试强制重建：{}", username);
@@ -145,6 +160,7 @@ public class UserTryController {
 
         logger.warn("管理员 {} 强制执行刷新操作", username);
         extOjService.flushTriesDB();
+        logger.info("强制刷新操作完成，用户：{}", username);
         return ApiResponse.ok("强制刷新成功", null);
     }
 
@@ -153,10 +169,12 @@ public class UserTryController {
      */
     @GetMapping("/stats/last-update")
     public ApiResponse<Map<String, Object>> getLastUpdate() {
+        logger.info("查询最近一次数据更新时间");
         try {
             LocalDateTime lastUpdateTime = extOjService.getLastUpdateTime();
             String lastUpdateStr = lastUpdateTime != null ? lastUpdateTime.toString() : null;
             Map<String, Object> data = Map.of("lastUpdate", lastUpdateStr);
+            logger.info("成功查询最近一次更新时间：{}", lastUpdateStr);
             return ApiResponse.ok("查询成功", data);
         } catch (Exception e) {
             logger.error("查询上次更新时间失败", e);
@@ -169,9 +187,10 @@ public class UserTryController {
      */
     @GetMapping("/stats/status")
     public ApiResponse<Map<String, Object>> getUpdateStatus() {
+        logger.info("查询系统更新状态");
         Map<String, Object> data = Map.of(
-                "updating", extOjService.isUpdating()
-        );
+                "updating", extOjService.isUpdating());
+        logger.info("系统更新状态查询完成，updating: {}", extOjService.isUpdating());
         return ApiResponse.ok("状态查询成功", data);
     }
 }

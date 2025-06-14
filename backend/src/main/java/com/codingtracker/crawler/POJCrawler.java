@@ -1,8 +1,11 @@
 package com.codingtracker.crawler;
 
+import com.codingtracker.exception.CrawlerException;
+import com.codingtracker.exception.NetworkException;
 import com.codingtracker.model.*;
 import com.codingtracker.repository.ExtOjLinkRepository;
 import com.codingtracker.repository.ExtOjPbInfoRepository;
+import io.micrometer.common.util.StringUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -77,64 +80,87 @@ public class POJCrawler {
      * 获取指定用户的所有尝试记录（含 Accepted），映射为 UserTryProblem 列表
      */
     public List<UserTryProblem> userTryProblems(User user) {
-        ExtOjLink link = linkRepo.findById(getOjType())
-                .orElseThrow(() -> new RuntimeException("Missing POJ link config"));
-        String statusTpl = link.getUserInfoLink(); // e.g. "http://poj.org/status?user_id=%s"
+        try {
+            ExtOjLink link = linkRepo.findById(getOjType())
+                    .orElseThrow(() -> new CrawlerException(getOjType(), "Missing POJ link config"));
+            String statusTpl = link.getUserInfoLink(); // e.g. "http://poj.org/status?user_id=%s"
 
-        // 收集用户所有 POJ 账号
-        List<String> handles = user.getOjAccounts().stream()
-                .filter(uo -> uo.getPlatform() == getOjType())
-                .map(UserOJ::getAccountName)
-                .collect(Collectors.toList());
-        if (handles.isEmpty()) {
-            logger.warn("用户 {} 未配置 POJ 账号", user.getUsername());
+            // 收集用户所有 POJ 账号
+            List<String> handles = user.getOjAccounts().stream()
+                    .filter(uo -> uo.getPlatform() == getOjType())
+                    .map(UserOJ::getAccountName)
+                    .flatMap(h -> Arrays.stream(h.split("\\s*,\\s*")))
+                    .filter(StringUtils::isNotBlank)
+                    .toList();
+            if (handles.isEmpty()) {
+                logger.warn("用户 {} 未配置 POJ 账号", user.getUsername());
+                return Collections.emptyList();
+            }
+
+            List<UserTryProblem> tries = new ArrayList<>();
+            for (String handle : handles) {
+                try {
+                    String url = String.format(statusTpl, handle);
+                    logger.info("调用 POJ 用户状态页面，url：{}", url);
+                    Document doc = Jsoup.connect(url)
+                            .userAgent("Mozilla/5.0")
+                            .timeout(10000)
+                            .get();
+                    Element table = doc.selectFirst("table.a");
+                    if (table == null) {
+                        logger.warn("用户 {} 的提交记录表格未找到", handle);
+                        continue;
+                    }
+                    Elements rows = table.select("tr");
+                    for (Element row : rows) {
+                        try {
+                            Elements cols = row.select("td");
+                            if (cols.size() >= 9) {
+                                String pid = cols.get(2).text().trim();
+                                String verdict = cols.get(3).text().trim();
+                                // 只记录 AC
+                                if (!"Accepted".equalsIgnoreCase(verdict))
+                                    continue;
+                                LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+                                ExtOjPbInfo info = pbInfoRepo.findByOjNameAndPid(getOjType(), pid)
+                                        .orElseGet(() -> {
+                                            try {
+                                                ExtOjPbInfo p = fetchProblem(pid);
+                                                return (p != null) ? pbInfoRepo.save(p) : null;
+                                            } catch (Exception e) {
+                                                logger.error("获取POJ题目 {} 信息失败: {}", pid, e.getMessage());
+                                                return null;
+                                            }
+                                        });
+                                if (info == null)
+                                    continue;
+                                tries.add(UserTryProblem.builder()
+                                        .user(user)
+                                        .extOjPbInfo(info)
+                                        .ojName(getOjType())
+                                        .result(ProblemResult.AC)
+                                        .attemptTime(now)
+                                        .build());
+                            }
+                        } catch (Exception e) {
+                            logger.warn("解析POJ用户 {} 的某行提交记录时发生异常: {}", handle, e.getMessage());
+                        }
+                    }
+                } catch (IOException e) {
+                    logger.error("获取 POJ 用户 {} 提交记录网络请求失败: {}", handle, e.getMessage());
+                } catch (Exception e) {
+                    logger.error("获取 POJ 用户 {} 提交记录时发生异常: {}", handle, e.getMessage());
+                }
+            }
+            logger.info("POJ 用户 {} 共抓取到 {} 条尝试记录", user.getUsername(), tries.size());
+            return tries;
+        } catch (CrawlerException e) {
+            logger.error("POJ爬虫异常: {}", e.getMessage());
+            return Collections.emptyList();
+        } catch (Exception e) {
+            logger.error("获取POJ用户尝试记录时发生未知异常: {}", e.getMessage());
             return Collections.emptyList();
         }
-
-        List<UserTryProblem> tries = new ArrayList<>();
-        for (String handle : handles) {
-            String url = String.format(statusTpl, handle);
-            logger.info("调用 POJ 用户状态页面，url：{}", url);
-            try {
-                Document doc = Jsoup.connect(url)
-                        .userAgent("Mozilla/5.0")
-                        .timeout(10000)
-                        .get();
-                Element table = doc.selectFirst("table.a");
-                if (table == null) {
-                    logger.warn("用户 {} 的提交记录表格未找到", handle);
-                    continue;
-                }
-                Elements rows = table.select("tr");
-                for (Element row : rows) {
-                    Elements cols = row.select("td");
-                    if (cols.size() >= 9) {
-                        String pid = cols.get(2).text().trim();
-                        String verdict = cols.get(3).text().trim();
-                        // 只记录 AC
-                        if (!"Accepted".equalsIgnoreCase(verdict)) continue;
-                        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
-                        ExtOjPbInfo info = pbInfoRepo.findByOjNameAndPid(getOjType(), pid)
-                                .orElseGet(() -> {
-                                    ExtOjPbInfo p = fetchProblem(pid);
-                                    return (p != null) ? pbInfoRepo.save(p) : null;
-                                });
-                        if (info == null) continue;
-                        tries.add(UserTryProblem.builder()
-                                .user(user)
-                                .extOjPbInfo(info)
-                                .ojName(getOjType())
-                                .result(ProblemResult.AC)
-                                .attemptTime(now)
-                                .build());
-                    }
-                }
-            } catch (IOException e) {
-                logger.error("获取 POJ 用户 {} 提交记录失败", handle, e);
-            }
-        }
-        logger.info("POJ 用户 {} 共抓取到 {} 条尝试记录", user.getUsername(), tries.size());
-        return tries;
     }
 
     /**
@@ -148,7 +174,8 @@ public class POJCrawler {
                         ExtOjPbInfo p = fetchProblem(pid);
                         return (p != null) ? pbInfoRepo.save(p) : null;
                     });
-            if (info != null) list.add(info);
+            if (info != null)
+                list.add(info);
         }
         return list;
     }
