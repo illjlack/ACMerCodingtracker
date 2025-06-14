@@ -53,25 +53,63 @@ service.interceptors.response.use(
     // HTTP 层面错误（网络错误、超时、5xx 等）
     console.error('Response Error: ', error)
 
-    // 如果是 403，认为是登录过期
-    if (error.response && error.response.status === 403) {
-      Message({
-        message: '登录已过期，请重新登录',
-        type: 'warning',
-        duration: 3000
-      })
+    if (error.response) {
+      const { status, data } = error.response
 
-      // 清空用户信息，重置 token
-      store.dispatch('user/resetToken').then(() => {
-        // 跳转到登录页，带上当前路径方便登录后重定向
-        router.push(`/login?redirect=${router.currentRoute.fullPath}`)
-      })
+      // 401: 未认证（登录过期、token无效等）
+      if (status === 401) {
+        Message({
+          message: '登录已过期，请重新登录',
+          type: 'warning',
+          duration: 3000
+        })
+
+        // 清空用户信息，重置 token
+        store.dispatch('user/resetToken').then(() => {
+          // 跳转到登录页，带上当前路径方便登录后重定向
+          router.push(`/login?redirect=${router.currentRoute.fullPath}`)
+        })
+      } else if (status === 403) {
+        // 优先使用后端返回的错误信息
+        const message = (data && data.message) || '权限不足，无法访问该资源'
+        Message({
+          message: message,
+          type: 'error',
+          duration: 5000
+        })
+      } else if (status === 400) {
+        const message = (data && data.message) || '请求参数错误'
+        Message({
+          message: message,
+          type: 'error',
+          duration: 5000
+        })
+      } else if (status === 404) {
+        Message({
+          message: '请求的资源不存在',
+          type: 'error',
+          duration: 3000
+        })
+      } else if (status >= 500) {
+        Message({
+          message: '服务器内部错误，请稍后重试',
+          type: 'error',
+          duration: 5000
+        })
+      } else {
+        const message = (data && data.message) || error.message || `HTTP ${status} 错误`
+        Message({
+          message: message,
+          type: 'error',
+          duration: 5000
+        })
+      }
     } else {
-      // 其他错误提示
+      // 网络错误、超时等
       Message({
-        message: error.message,
+        message: error.message || '网络连接失败，请检查网络设置',
         type: 'error',
-        duration: 5 * 1000
+        duration: 5000
       })
     }
 

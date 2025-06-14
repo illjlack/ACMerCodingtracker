@@ -16,6 +16,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.List;
 
@@ -69,12 +70,23 @@ public class SecurityConfig {
                         // 允许访问头像资源
                         .requestMatchers("/avatars/**").permitAll()
                         // 其它接口都需要走 JWT 认证
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated())
                 // 在 UsernamePasswordFilter 之前插入你的 JWT 校验过滤器
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 // 不启用默认的 basic auth
-                .httpBasic(AbstractHttpConfigurer::disable);
+                .httpBasic(AbstractHttpConfigurer::disable)
+                // 配置异常处理
+                .exceptionHandling(exceptions -> exceptions
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"success\":false,\"message\":\"权限不足，无法访问该资源\",\"code\":403}");
+                        })
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json;charset=UTF-8");
+                            response.getWriter().write("{\"success\":false,\"message\":\"未认证，请先登录\",\"code\":401}");
+                        }));
 
         return http.build();
     }

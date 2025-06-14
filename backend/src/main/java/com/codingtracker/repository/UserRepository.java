@@ -35,5 +35,58 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     List<User> findByRolesContains(User.Type role);
 
-    List<User> findByUsernameContainingIgnoreCaseOrRealNameContainingIgnoreCaseOrEmailContainingIgnoreCase(String keyword, String keyword1, String keyword2);
+    List<User> findByUsernameContainingIgnoreCaseOrRealNameContainingIgnoreCaseOrEmailContainingIgnoreCase(
+            String keyword, String keyword1, String keyword2);
+
+    /**
+     * 优化的查询方法：分步加载避免笛卡尔积问题
+     * 先加载用户和标签
+     */
+    @Query("SELECT DISTINCT u FROM User u " +
+            "LEFT JOIN FETCH u.tags " +
+            "ORDER BY u.id")
+    List<User> findAllWithTags();
+
+    /**
+     * 加载用户和OJ账号
+     */
+    @Query("SELECT DISTINCT u FROM User u " +
+            "LEFT JOIN FETCH u.ojAccounts " +
+            "WHERE u.id IN :userIds " +
+            "ORDER BY u.id")
+    List<User> findUsersWithOJAccountsByIds(List<Integer> userIds);
+
+    /**
+     * 根据用户名查找用户，同时加载标签
+     */
+    @Query("SELECT u FROM User u " +
+            "LEFT JOIN FETCH u.tags " +
+            "WHERE u.username = :username")
+    Optional<User> findByUsernameWithTags(String username);
+
+    /**
+     * 根据用户名查找用户，同时加载OJ账号
+     */
+    @Query("SELECT u FROM User u " +
+            "LEFT JOIN FETCH u.ojAccounts " +
+            "WHERE u.username = :username")
+    Optional<User> findByUsernameWithOJAccounts(String username);
+
+    /**
+     * 优化的搜索方法：根据关键词搜索用户，同时加载标签
+     */
+    @Query("SELECT DISTINCT u FROM User u " +
+            "LEFT JOIN FETCH u.tags " +
+            "WHERE u.username LIKE %:keyword% OR u.realName LIKE %:keyword% " +
+            "ORDER BY u.id")
+    List<User> searchByUsernameOrRealNameWithTags(String keyword);
+
+    /**
+     * 根据用户ID列表搜索用户，同时加载OJ账号
+     */
+    @Query("SELECT DISTINCT u FROM User u " +
+            "LEFT JOIN FETCH u.ojAccounts " +
+            "WHERE u.id IN :userIds " +
+            "ORDER BY u.id")
+    List<User> findByIdsWithOJAccounts(List<Integer> userIds);
 }

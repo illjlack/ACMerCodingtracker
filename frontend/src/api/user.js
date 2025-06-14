@@ -169,3 +169,132 @@ export function toggleUserStatus(id) {
     method: 'put'
   })
 }
+
+// ================== 用户标签相关 API ==================
+
+/**
+ * 获取所有用户标签
+ */
+export function getAllUserTags() {
+  return request({
+    url: '/api/admin/user-tags',
+    method: 'get'
+  })
+}
+
+/**
+ * 根据ID获取用户标签
+ * @param {number} id 标签ID
+ */
+export function getUserTagById(id) {
+  return request({
+    url: `/api/admin/user-tags/${id}`,
+    method: 'get'
+  })
+}
+
+/**
+ * 创建新的用户标签
+ * @param {{ name: string, color?: string, description?: string }} data
+ */
+export function createUserTag(data) {
+  return request({
+    url: '/api/admin/user-tags',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 更新用户标签
+ * @param {number} id 标签ID
+ * @param {{ name?: string, color?: string, description?: string }} data
+ */
+export function updateUserTag(id, data) {
+  return request({
+    url: `/api/admin/user-tags/${id}`,
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 删除用户标签
+ * @param {number} id 标签ID
+ */
+export function deleteUserTag(id) {
+  return request({
+    url: `/api/admin/user-tags/${id}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 为用户添加标签
+ * @param {number} userId 用户ID
+ * @param {number} tagId 标签ID
+ */
+export function addTagToUser(userId, tagId) {
+  return request({
+    url: `/api/admin/user-tags/users/${userId}/tags/${tagId}`,
+    method: 'post'
+  })
+}
+
+/**
+ * 从用户移除标签
+ * @param {number} userId 用户ID
+ * @param {number} tagId 标签ID
+ */
+export function removeTagFromUser(userId, tagId) {
+  return request({
+    url: `/api/admin/user-tags/users/${userId}/tags/${tagId}`,
+    method: 'delete'
+  })
+}
+
+/**
+ * 设置用户的所有标签
+ * @param {number} userId 用户ID
+ * @param {number[]} tagIds 标签ID数组
+ */
+export function setUserTags(userId, tagIds) {
+  return request({
+    url: `/api/admin/user-tags/users/${userId}/tags`,
+    method: 'put',
+    data: tagIds
+  })
+}
+
+/**
+ * 搜索用户标签
+ * @param {string} name 标签名称
+ */
+export function searchUserTags(name) {
+  return request({
+    url: '/api/admin/user-tags/search',
+    method: 'get',
+    params: { name }
+  })
+}
+
+/**
+ * 获取标签使用统计
+ * @param {number} id 标签ID
+ */
+export function getUserTagUsage(id) {
+  return request({
+    url: `/api/admin/user-tags/${id}/usage`,
+    method: 'get'
+  })
+}
+
+/**
+ * 获取支持的OJ平台列表
+ */
+export function getOJPlatforms() {
+  return request({
+    url: '/api/admin/users/oj-platforms',
+    method: 'get'
+  })
+}

@@ -24,18 +24,13 @@ import java.util.Set;
 public class User implements Serializable, Comparable<User> {
 
     /**
-     * 用户类型枚举
+     * 用户类型枚举 - 简化为三种角色
      */
     @Getter
     public enum Type {
-        RETIRED("退役"),
-        QUIT("退出"),
-        ACMER("正式队员"),
-        REJECT("拒绝"),
-        VERIFYING("待审核"),
-        NEW("新人"),
-        COACH("教练"),
-        ADMIN("管理员");
+        SUPER_ADMIN("超级管理员"),
+        ADMIN("管理员"),
+        USER("普通用户");
 
         private final String shortStr;
 
@@ -109,17 +104,31 @@ public class User implements Serializable, Comparable<User> {
     private List<UserOJ> ojAccounts;
 
     /**
-     * 判断用户是否是管理员或教练
+     * 用户标签（多对多关系）
+     */
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "user_user_tag", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "tag_id"))
+    private Set<UserTag> tags = new HashSet<>();
+
+    /**
+     * 判断用户是否是管理员（包括超级管理员）
      */
     public boolean isAdmin() {
-        return roles.contains(Type.ADMIN) || roles.contains(Type.COACH);
+        return roles.contains(Type.ADMIN) || roles.contains(Type.SUPER_ADMIN);
     }
 
     /**
-     * 判断用户是否是正式队员
+     * 判断用户是否是超级管理员
      */
-    public boolean isACMer() {
-        return roles.contains(Type.ACMER);
+    public boolean isSuperAdmin() {
+        return roles.contains(Type.SUPER_ADMIN);
+    }
+
+    /**
+     * 判断用户是否是普通用户
+     */
+    public boolean isUser() {
+        return roles.contains(Type.USER);
     }
 
     /**

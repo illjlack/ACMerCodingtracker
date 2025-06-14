@@ -31,3 +31,9 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 日志文件 ###
+logs/
+*.log
+*.log.*
+!logs/README.md

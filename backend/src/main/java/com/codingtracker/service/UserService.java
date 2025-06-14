@@ -1,9 +1,12 @@
 package com.codingtracker.service;
 
 import com.codingtracker.dto.UserInfoDTO;
+import com.codingtracker.dto.UserCreateRequest;
+import com.codingtracker.dto.UserUpdateRequest;
 import com.codingtracker.init.SystemStatsLoader;
 import com.codingtracker.model.OJPlatform;
 import com.codingtracker.model.UserOJ;
+import com.codingtracker.model.UserTag;
 import com.codingtracker.repository.UserOJRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -52,7 +55,7 @@ public class UserService {
         }
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(hashedPassword);
-        user.getRoles().add(User.Type.NEW);
+        user.getRoles().add(User.Type.USER); // 新注册用户默认为普通用户
         userRepository.save(user);
 
         updateUserCountStat();
@@ -311,12 +314,90 @@ public class UserService {
         // 设置默认值
         user.setActive(true);
         if (user.getRoles() == null || user.getRoles().isEmpty()) {
-            user.setRoles(Set.of(User.Type.ACMER));
+            user.setRoles(Set.of(User.Type.USER)); // 默认设置为普通用户
         }
 
         // 加密密码
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        return userRepository.save(user);
+
+        // 处理 OJ 账号 - 先保存用户，再处理 OJ 账号
+        List<UserOJ> ojAccountsToAdd = new ArrayList<>();
+        Set<String> addedAccounts = new HashSet<>(); // 用于防止重复
+
+        if (user.getOjAccounts() != null) {
+            for (UserOJ ojAccount : user.getOjAccounts()) {
+                if (ojAccount.getPlatform() != null && StringUtils.hasText(ojAccount.getAccountName())) {
+                    String accountName = ojAccount.getAccountName().trim();
+                    String accountKey = ojAccount.getPlatform().name() + ":" + accountName;
+
+                    // 检查账号名是否有效
+                    if (accountName.isEmpty()) {
+                        throw new RuntimeException("OJ账号名不能为空");
+                    }
+
+                    // 检查是否重复
+                    if (!addedAccounts.contains(accountKey)) {
+                        UserOJ newOJ = new UserOJ();
+                        newOJ.setPlatform(ojAccount.getPlatform());
+                        newOJ.setAccountName(accountName);
+                        ojAccountsToAdd.add(newOJ);
+                        addedAccounts.add(accountKey);
+                    }
+                }
+            }
+        }
+
+        // 临时清空 OJ 账号，先保存用户
+        user.getOjAccounts().clear();
+        User savedUser = userRepository.save(user);
+
+        // 再添加 OJ 账号
+        for (UserOJ ojAccount : ojAccountsToAdd) {
+            ojAccount.setUser(savedUser);
+            savedUser.getOjAccounts().add(ojAccount);
+        }
+
+        return userRepository.save(savedUser);
+    }
+
+    /**
+     * 从请求DTO创建新用户
+     */
+    @Transactional
+    public User createUserFromRequest(UserCreateRequest request) {
+        // 创建User实体
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(request.getPassword());
+        user.setRealName(request.getRealName());
+        user.setEmail(request.getEmail());
+        user.setMajor(request.getMajor());
+        user.setRoles(request.getRoles() != null ? request.getRoles() : Set.of(User.Type.USER));
+
+        // 处理OJ账号
+        List<UserOJ> ojAccounts = new ArrayList<>();
+        if (request.getOjAccounts() != null) {
+            for (UserCreateRequest.OJAccountRequest ojRequest : request.getOjAccounts()) {
+                if (ojRequest.getPlatform() != null && StringUtils.hasText(ojRequest.getAccountName())) {
+                    UserOJ ojAccount = new UserOJ();
+                    ojAccount.setPlatform(ojRequest.getPlatform());
+                    ojAccount.setAccountName(ojRequest.getAccountName().trim());
+                    ojAccounts.add(ojAccount);
+                }
+            }
+        }
+        user.setOjAccounts(ojAccounts);
+
+        // 调用原有的创建用户方法
+        User createdUser = createUser(user);
+
+        // 处理标签
+        if (request.getTags() != null && !request.getTags().isEmpty()) {
+            // 这里需要UserTagService来设置标签，但为了避免循环依赖，我们暂时跳过
+            // 可以在Controller层单独处理标签设置
+        }
+
+        return createdUser;
     }
 
     /**
@@ -346,6 +427,187 @@ public class UserService {
         }
 
         return userRepository.save(existingUser);
+    }
+
+    /**
+     * 管理员更新用户信息（带权限验证）
+     */
+    @Transactional
+    public User updateUserByAdmin(Integer id, User user, String currentUsername) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Current user not found"));
+
+        // 权限验证
+        validateAdminPermission(currentUser, existingUser, user);
+
+        // 更新基本信息
+        if (StringUtils.hasText(user.getRealName())) {
+            existingUser.setRealName(user.getRealName());
+        }
+        if (StringUtils.hasText(user.getEmail())) {
+            if (!user.getEmail().equals(existingUser.getEmail()) &&
+                    userRepository.existsByEmail(user.getEmail())) {
+                throw new RuntimeException("Email already exists");
+            }
+            existingUser.setEmail(user.getEmail());
+        }
+        if (StringUtils.hasText(user.getMajor())) {
+            existingUser.setMajor(user.getMajor());
+        }
+        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
+            existingUser.setRoles(user.getRoles());
+        }
+
+        // 处理 OJ 账号更新 - 使用完全替换策略
+        if (user.getOjAccounts() != null) {
+            // 使用@Modifying注解的方法直接删除数据库中的记录
+            userOJRepository.deleteByUserId(existingUser.getId());
+            // 立即刷新，确保删除操作生效
+            userOJRepository.flush();
+
+            // 清空实体中的关联
+            existingUser.getOjAccounts().clear();
+
+            // 添加新的 OJ 账号
+            Set<String> addedAccounts = new HashSet<>(); // 用于防止重复
+            for (UserOJ newOJ : user.getOjAccounts()) {
+                if (newOJ.getPlatform() != null && StringUtils.hasText(newOJ.getAccountName())) {
+                    String accountName = newOJ.getAccountName().trim();
+                    String accountKey = newOJ.getPlatform().name() + ":" + accountName;
+
+                    // 检查账号名是否有效
+                    if (accountName.isEmpty()) {
+                        throw new RuntimeException("OJ账号名不能为空");
+                    }
+
+                    // 检查是否重复
+                    if (!addedAccounts.contains(accountKey)) {
+                        UserOJ ojAccount = new UserOJ();
+                        ojAccount.setUser(existingUser);
+                        ojAccount.setPlatform(newOJ.getPlatform());
+                        ojAccount.setAccountName(accountName);
+                        existingUser.getOjAccounts().add(ojAccount);
+                        addedAccounts.add(accountKey);
+                    }
+                }
+            }
+        }
+
+        return userRepository.save(existingUser);
+    }
+
+    /**
+     * 从请求DTO更新用户信息
+     */
+    @Transactional
+    public User updateUserByAdminFromRequest(Integer id, UserUpdateRequest request, String currentUsername) {
+        // 创建User对象用于更新
+        User user = new User();
+        user.setRealName(request.getRealName());
+        user.setEmail(request.getEmail());
+        user.setMajor(request.getMajor());
+        user.setRoles(request.getRoles());
+
+        // 处理OJ账号
+        List<UserOJ> ojAccounts = new ArrayList<>();
+        if (request.getOjAccounts() != null) {
+            for (UserUpdateRequest.OJAccountRequest ojRequest : request.getOjAccounts()) {
+                if (ojRequest.getPlatform() != null && StringUtils.hasText(ojRequest.getAccountName())) {
+                    UserOJ ojAccount = new UserOJ();
+                    ojAccount.setPlatform(ojRequest.getPlatform());
+                    ojAccount.setAccountName(ojRequest.getAccountName().trim());
+                    ojAccounts.add(ojAccount);
+                }
+            }
+        }
+        user.setOjAccounts(ojAccounts);
+
+        // 调用原有的更新用户方法
+        User updatedUser = updateUserByAdmin(id, user, currentUsername);
+
+        // 处理标签
+        if (request.getTags() != null) {
+            // 这里需要UserTagService来设置标签，但为了避免循环依赖，我们暂时跳过
+            // 可以在Controller层单独处理标签设置
+        }
+
+        return updatedUser;
+    }
+
+    /**
+     * 验证管理员权限
+     */
+    private void validateAdminPermission(User currentUser, User targetUser, User updateData) {
+        boolean isCurrentSuperAdmin = currentUser.isSuperAdmin();
+        boolean isCurrentAdmin = currentUser.isAdmin();
+        boolean isTargetAdmin = targetUser.isAdmin();
+        boolean isTargetSuperAdmin = targetUser.isSuperAdmin();
+
+        // 如果当前用户不是管理员，直接拒绝
+        if (!isCurrentAdmin) {
+            throw new RuntimeException("权限不足：只有管理员才能执行此操作");
+        }
+
+        // 如果当前用户是普通管理员
+        if (isCurrentAdmin && !isCurrentSuperAdmin) {
+            // 不能编辑其他管理员或超级管理员
+            if (isTargetAdmin || isTargetSuperAdmin) {
+                throw new RuntimeException("权限不足：管理员不能编辑其他管理员或超级管理员");
+            }
+
+            // 不能设置超级管理员角色
+            if (updateData.getRoles() != null && updateData.getRoles().contains(User.Type.SUPER_ADMIN)) {
+                throw new RuntimeException("权限不足：管理员不能设置超级管理员角色");
+            }
+
+            // 不能设置管理员角色
+            if (updateData.getRoles() != null && updateData.getRoles().contains(User.Type.ADMIN)) {
+                throw new RuntimeException("权限不足：管理员不能设置管理员角色");
+            }
+        }
+    }
+
+    /**
+     * 检查用户是否可以被当前管理员编辑
+     */
+    public boolean canEditUser(String currentUsername, Integer targetUserId) {
+        try {
+            User currentUser = userRepository.findByUsername(currentUsername)
+                    .orElseThrow(() -> new RuntimeException("Current user not found"));
+            User targetUser = userRepository.findById(targetUserId)
+                    .orElseThrow(() -> new RuntimeException("Target user not found"));
+
+            boolean isCurrentSuperAdmin = currentUser.isSuperAdmin();
+            boolean isCurrentAdmin = currentUser.isAdmin();
+            boolean isTargetAdmin = targetUser.isAdmin();
+            boolean isTargetSuperAdmin = targetUser.isSuperAdmin();
+
+            // 超级管理员可以编辑所有用户
+            if (isCurrentSuperAdmin) {
+                return true;
+            }
+
+            // 普通管理员不能编辑管理员或超级管理员
+            if (isCurrentAdmin && !isCurrentSuperAdmin) {
+                return !isTargetAdmin && !isTargetSuperAdmin;
+            }
+
+            // 非管理员不能编辑任何用户
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 检查用户是否可以被当前管理员删除
+     */
+    public boolean canDeleteUser(String currentUsername, Integer targetUserId) {
+        // 删除权限与编辑权限相同
+        return canEditUser(currentUsername, targetUserId);
     }
 
     /**
@@ -387,8 +649,70 @@ public class UserService {
         return userRepository.findByUsername(username);
     }
 
+    /**
+     * 获取所有用户数据，包含标签和OJ账号，使用优化查询避免N+1问题
+     */
+    @Transactional(readOnly = true)
+    private List<User> getAllUsersWithCompleteData() {
+        // 先获取所有用户的基本信息
+        List<User> allUsers = userRepository.findAll();
+
+        if (allUsers.isEmpty()) {
+            return allUsers;
+        }
+
+        // 收集用户ID
+        List<Integer> userIds = allUsers.stream()
+                .map(User::getId)
+                .collect(Collectors.toList());
+
+        // 分别获取标签和OJ账号数据
+        List<User> usersWithTags = userRepository.findAllWithTags();
+        List<User> usersWithOJAccounts = userRepository.findUsersWithOJAccountsByIds(userIds);
+
+        // 创建映射
+        Map<Integer, Set<UserTag>> tagsMap = usersWithTags.stream()
+                .collect(Collectors.toMap(
+                        User::getId,
+                        user -> new HashSet<>(user.getTags()),
+                        (existing, replacement) -> existing));
+
+        Map<Integer, List<UserOJ>> ojAccountsMap = usersWithOJAccounts.stream()
+                .collect(Collectors.toMap(
+                        User::getId,
+                        user -> new ArrayList<>(user.getOjAccounts()),
+                        (existing, replacement) -> existing));
+
+        // 构建完整的用户数据
+        for (User user : allUsers) {
+            // 初始化集合（确保不是懒加载的代理对象）
+            if (user.getTags() == null) {
+                user.setTags(new HashSet<>());
+            } else {
+                user.getTags().clear();
+            }
+
+            if (user.getOjAccounts() == null) {
+                user.setOjAccounts(new ArrayList<>());
+            } else {
+                user.getOjAccounts().clear();
+            }
+
+            // 设置标签
+            Set<UserTag> tags = tagsMap.getOrDefault(user.getId(), new HashSet<>());
+            user.getTags().addAll(tags);
+
+            // 设置OJ账号
+            List<UserOJ> ojAccounts = ojAccountsMap.getOrDefault(user.getId(), new ArrayList<>());
+            user.getOjAccounts().addAll(ojAccounts);
+        }
+
+        return allUsers;
+    }
+
     public List<User> getAllUsers() {
-        return userRepository.findAll();
+        // 使用优化查询获取完整用户数据
+        return getAllUsersWithCompleteData();
     }
 
     public User getUserById(Integer id) {
@@ -409,9 +733,15 @@ public class UserService {
 
     public List<User> searchUsers(String keyword) {
         if (!StringUtils.hasText(keyword)) {
-            return userRepository.findAll();
+            // 如果没有关键词，返回所有用户
+            return getAllUsersWithCompleteData();
         }
-        return userRepository.searchByUsernameOrRealName(keyword);
+        // 使用优化查询搜索用户
+        List<User> allUsers = getAllUsersWithCompleteData();
+        return allUsers.stream()
+                .filter(user -> user.getUsername().toLowerCase().contains(keyword.toLowerCase()) ||
+                        user.getRealName().toLowerCase().contains(keyword.toLowerCase()))
+                .collect(Collectors.toList());
     }
 
     public boolean existsByUsername(String username) {

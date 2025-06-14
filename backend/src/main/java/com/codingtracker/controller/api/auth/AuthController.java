@@ -66,7 +66,7 @@ public class AuthController {
         user.setRealName(req.realName);
         user.setMajor(req.major);
         user.setEmail(req.email);
-        user.getRoles().add(User.Type.NEW);
+        user.getRoles().add(User.Type.USER);
 
         boolean ok = userService.registerUser(user);
         if (ok) {
