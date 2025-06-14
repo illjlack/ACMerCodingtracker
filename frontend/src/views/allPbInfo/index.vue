@@ -106,7 +106,7 @@
 </template>
 
 <script>
-import { fetchAcCounts, fetchTryCounts, fetchLastUpdate, manualRebuild } from '@/api/usertry'
+import { fetchAcCounts, fetchTryCounts, fetchLastUpdate, manualRebuild, forceUpdateDB } from '@/api/usertry'
 import { export_json_to_excel } from '@/vendor/Export2Excel'
 
 export default {
@@ -261,12 +261,64 @@ export default {
           this.$message.success(res.message)
           this.fetchData()
           this.fetchLastUpdateTime()
+        } else if (res && !res.success && res.data && res.data.tokenValidation) {
+          // 检测到token失效
+          this.handleTokenExpired(res.data.tokenValidation)
         }
       } catch (e) {
         this.$message.error(e.message)
       } finally {
         this.updating = false
       }
+    },
+
+    handleTokenExpired(tokenValidation) {
+      const invalidPlatforms = tokenValidation.platforms
+        .filter(p => !p.valid)
+        .map(p => `${p.platform}: ${p.message}`)
+        .join('\n')
+
+      this.$confirm(
+        `检测到以下平台的认证已失效：\n\n${invalidPlatforms}\n\n是否继续强制更新？`,
+        '认证失效警告',
+        {
+          confirmButtonText: '继续更新',
+          cancelButtonText: '管理Token',
+          type: 'warning',
+          customClass: 'token-expired-dialog',
+          beforeClose: (action, instance, done) => {
+            if (action === 'confirm') {
+              this.performForceUpdate()
+            } else if (action === 'cancel') {
+              this.openTokenManagement()
+            }
+            done()
+          }
+        }
+      ).catch(() => {
+        // 用户取消操作
+      })
+    },
+
+    async performForceUpdate() {
+      this.updating = true
+      try {
+        const res = await forceUpdateDB()
+        if (res && res.success) {
+          this.$message.success('强制更新已开始，这需要几分钟')
+          this.fetchData()
+          this.fetchLastUpdateTime()
+        }
+      } catch (e) {
+        this.$message.error('强制更新失败: ' + e.message)
+      } finally {
+        this.updating = false
+      }
+    },
+
+    openTokenManagement() {
+      // 这里可以跳转到token管理页面或打开模态框
+      this.$router.push('/token-management')
     },
 
     sortNumber(a, b) {
@@ -308,6 +360,28 @@ export default {
   .table-wrapper {
     width: 100%;
     overflow-x: auto; /* 超出宽度时显示横向滚动条 */
+  }
+}
+
+/* Token过期对话框样式 */
+::v-deep .token-expired-dialog {
+  .el-message-box__message {
+    white-space: pre-line;
+    font-family: monospace;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .el-message-box__btns {
+    .el-button--primary {
+      background-color: #e6a23c;
+      border-color: #e6a23c;
+
+      &:hover {
+        background-color: #ebb563;
+        border-color: #ebb563;
+      }
+    }
   }
 }
 </style>

@@ -1,0 +1,51 @@
+{
+  "manifest_version": 2,
+  "name": "Coding Tracker Token Helper (Firefox)",
+  "version": "1.0",
+  "description": "自动获取OJ平台的Token用于Coding Tracker - Firefox版本",
+  "permissions": [
+    "activeTab",
+    "cookies",
+    "storage",
+    "tabs",
+    "https://www.luogu.com.cn/*",
+    "https://leetcode.com/*",
+    "https://leetcode.cn/*",
+    "https://codeforces.com/*",
+    "https://atcoder.jp/*",
+    "https://www.topcoder.com/*",
+    "https://vjudge.net/*",
+    "https://www.spoj.com/*",
+    "https://www.codechef.com/*"
+  ],
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_title": "获取Token (Firefox版)"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.luogu.com.cn/*",
+        "https://leetcode.com/*",
+        "https://leetcode.cn/*",
+        "https://codeforces.com/*",
+        "https://atcoder.jp/*",
+        "https://www.topcoder.com/*",
+        "https://vjudge.net/*",
+        "https://www.spoj.com/*",
+        "https://www.codechef.com/*"
+      ],
+      "js": ["content-firefox.js"]
+    }
+  ],
+  "background": {
+    "scripts": ["background-firefox.js"],
+    "persistent": false
+  },
+  "applications": {
+    "gecko": {
+      "id": "coding-tracker-token-helper@firefox.com",
+      "strict_min_version": "57.0"
+    }
+  }
+} 

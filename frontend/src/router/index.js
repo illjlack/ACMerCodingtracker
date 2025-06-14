@@ -171,6 +171,42 @@ export const asyncRoutes = [
         }
       }
     ]
+  },
+  // Token管理页面 - 需要管理员权限
+  {
+    path: '/tokenManagement',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/tokenManagement/index'),
+        name: 'TokenManagement',
+        meta: {
+          title: 'Token管理',
+          icon: 'key',
+          noCache: true,
+          roles: ['ADMIN', 'SUPER_ADMIN'] // 只允许管理员和超级管理员访问
+        }
+      }
+    ]
+  },
+  // 题目管理页面 - 需要管理员权限
+  {
+    path: '/problemManagement',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/problemManagement/index'),
+        name: 'ProblemManagement',
+        meta: {
+          title: '题目管理',
+          icon: 'documentation',
+          noCache: true,
+          roles: ['ADMIN', 'SUPER_ADMIN'] // 只允许管理员和超级管理员访问
+        }
+      }
+    ]
   }
   // 个人做题信息页：可选传参 userId
   // {

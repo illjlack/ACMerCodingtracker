@@ -59,3 +59,87 @@ export function listUserTries(username, page = 0, size = 10) {
     params: { page, size }
   })
 }
+
+export function fetchUserTryProblems(params) {
+  return request({
+    url: '/api/usertry/list/' + params.username,
+    method: 'get',
+    params: {
+      page: params.page || 0,
+      size: params.size || 20
+    }
+  })
+}
+
+export function forceRebuild() {
+  return request({
+    url: '/api/usertry/stats/force-rebuild',
+    method: 'post'
+  })
+}
+
+export function getUpdateStatus() {
+  return request({
+    url: '/api/usertry/stats/status',
+    method: 'get'
+  })
+}
+
+// 新增的token验证和管理API
+export function validateAllTokens() {
+  return request({
+    url: '/api/admin/tokens/validate-all',
+    method: 'post'
+  })
+}
+
+export function forceUpdateDB() {
+  return request({
+    url: '/api/usertry/updatedb/force',
+    method: 'post'
+  })
+}
+
+export function getTokenStatus() {
+  return request({
+    url: '/api/admin/tokens/status',
+    method: 'get'
+  })
+}
+
+export function updateToken(platform, token) {
+  return request({
+    url: `/api/admin/tokens/${platform}`,
+    method: 'put',
+    data: { token }
+  })
+}
+
+export function validatePlatformToken(platform) {
+  return request({
+    url: `/api/admin/tokens/${platform}/validate`,
+    method: 'post'
+  })
+}
+
+export function deleteToken(platform) {
+  return request({
+    url: `/api/admin/tokens/${platform}`,
+    method: 'delete'
+  })
+}
+
+export function getPlatformInfo(platform) {
+  return request({
+    url: `/api/admin/tokens/${platform}/info`,
+    method: 'get'
+  })
+}
+
+export function validateTokenFormat(platform, token) {
+  return request({
+    url: `/api/admin/tokens/${platform}/validate-format`,
+    method: 'post',
+    data: { token }
+  })
+}
