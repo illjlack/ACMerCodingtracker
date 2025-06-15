@@ -167,7 +167,7 @@
                         </goals>
                         <configuration>
                             <sourceDirs>
-                                <source>src/main/java</source>
+                                <source>src0/main/java</source>
                                 <source>target/generated-sources/annotations</source>
                             </sourceDirs>
                         </configuration>
@@ -180,7 +180,7 @@
                         </goals>
                         <configuration>
                             <sourceDirs>
-                                <source>src/test/java</source>
+                                <source>src0/test/java</source>
                                 <source>target/generated-test-sources/test-annotations</source>
                             </sourceDirs>
                         </configuration>
