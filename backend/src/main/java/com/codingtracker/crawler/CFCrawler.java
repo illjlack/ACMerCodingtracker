@@ -1,7 +1,6 @@
 package com.codingtracker.crawler;
 
 import com.codingtracker.exception.CrawlerException;
-import com.codingtracker.exception.NetworkException;
 import com.codingtracker.model.*;
 import com.codingtracker.repository.ExtOjLinkRepository;
 import com.codingtracker.repository.ExtOjPbInfoRepository;
@@ -50,78 +49,6 @@ public class CFCrawler {
 
   public OJPlatform getOjType() {
     return OJPlatform.CODEFORCES;
-  }
-
-  /**
-   * 批量调用 Codeforces user.info API，获取用户基本信息。
-   * 包括 handle、rating、maxRating、rank、maxRank、avatar、titlePhoto、
-   * registrationTime、lastOnlineTime。
-   *
-   * @param cfNameList 用户 handle 列表
-   * @return CFUserInfo 列表，若 API 返回状态非 OK 或网络异常则返回空列表
-   */
-  public List<CFUserInfo> getUserInfos(List<String> cfNameList) {
-    if (cfNameList == null || cfNameList.isEmpty()) {
-      logger.warn("CF用户名列表为空");
-      return Collections.emptyList();
-    }
-
-    try {
-      StringJoiner joiner = new StringJoiner(";",
-          "https://codeforces.com/api/user.info?handles=", "");
-      cfNameList.forEach(joiner::add);
-      String url = joiner.toString();
-      logger.info("调用 Codeforces user.info 接口，url：{}", url);
-
-      String response = httpUtil.readURL(url);
-      JsonNode root = mapper.readTree(response);
-
-      if (!"OK".equals(root.path("status").asText())) {
-        String comment = root.path("comment").asText("Unknown error");
-        logger.warn("Codeforces API 返回错误状态: {}", comment);
-        return Collections.emptyList();
-      }
-
-      JsonNode result = root.path("result");
-      List<CFUserInfo> users = new ArrayList<>();
-      for (JsonNode node : result) {
-        try {
-          String handle = node.path("handle").asText();
-          int rating = node.path("rating").asInt();
-          int maxRating = node.path("maxRating").asInt();
-          String rank = node.path("rank").asText();
-          String maxRank = node.path("maxRank").asText();
-          String avatar = node.path("avatar").asText(null);
-          String titlePhoto = node.path("titlePhoto").asText(null);
-          long regSec = node.path("registrationTimeSeconds").asLong(0L);
-          long lastOnlineSec = node.path("lastOnlineTimeSeconds").asLong(0L);
-          LocalDateTime registrationTime = LocalDateTime.ofEpochSecond(regSec, 0, ZoneOffset.UTC);
-          LocalDateTime lastOnlineTime = LocalDateTime.ofEpochSecond(lastOnlineSec, 0, ZoneOffset.UTC);
-
-          CFUserInfo info = new CFUserInfo(
-              handle,
-              rating,
-              maxRating,
-              rank,
-              maxRank,
-              avatar,
-              titlePhoto,
-              registrationTime,
-              lastOnlineTime);
-          users.add(info);
-        } catch (Exception e) {
-          logger.warn("解析 CF 用户信息失败，跳过此用户: {}", e.getMessage());
-        }
-      }
-      logger.info("成功获取 {} 个 CF 用户信息", users.size());
-      return users;
-    } catch (IOException e) {
-      logger.error("获取 CF 用户信息网络请求失败: {}", e.getMessage());
-      return Collections.emptyList();
-    } catch (Exception e) {
-      logger.error("获取 CF 用户信息时发生未知异常: {}", e.getMessage());
-      return Collections.emptyList();
-    }
   }
 
   /**

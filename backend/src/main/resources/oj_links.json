@@ -17,7 +17,7 @@
     "homepageLink": "https://codeforces.com/",
     "loginPageLink": "https://codeforces.com/enter",
     "submissionRecordsLink": "https://codeforces.com/submissions/%s",
-    "userInfoLink": "https://codeforces.com/api/user.status?handle=%s&from=%d&count=1000",
+    "userInfoLink": "https://codeforces.com/api/user.status?handle=%s",
     "pbStatusLink": "https://codeforces.com/api/problemset.problems",
     "problemLink": "https://codeforces.com/problem/%s",
     "loginLink": "https://codeforces.com/enter",

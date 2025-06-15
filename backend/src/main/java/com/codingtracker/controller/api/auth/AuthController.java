@@ -32,7 +32,8 @@ public class AuthController {
     private final UserRepository userRepository;
     private final TokenBlacklistCache tokenBlacklistCache;
 
-    public AuthController(UserService userService, UserRepository userRepository, TokenBlacklistCache tokenBlacklistCache) {
+    public AuthController(UserService userService, UserRepository userRepository,
+            TokenBlacklistCache tokenBlacklistCache) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.tokenBlacklistCache = tokenBlacklistCache;
@@ -40,15 +41,14 @@ public class AuthController {
 
     // 用户登录并返回 token
     @PostMapping("/login")
-    public ApiResponse<Map<String, Object>>  login(@RequestBody LoginRequest req) {
+    public ApiResponse<Map<String, Object>> login(@RequestBody LoginRequest req) {
         logger.info("用户登录尝试: 用户名={}", req.username);
         User user = userService.valid(req.username, req.password);
         if (user != null) {
             String token = JwtUtils.generateToken(req.username);
             logger.info("用户登录成功: 用户名={}", req.username);
             Map<String, Object> data = Map.of(
-                    "token", token
-            );
+                    "token", token);
             return ApiResponse.ok("登录成功", data);
         } else {
             logger.warn("用户登录失败: 用户名={}", req.username);
@@ -66,7 +66,6 @@ public class AuthController {
         user.setRealName(req.realName);
         user.setMajor(req.major);
         user.setEmail(req.email);
-        user.getRoles().add(User.Type.USER);
 
         boolean ok = userService.registerUser(user);
         if (ok) {
@@ -138,7 +137,6 @@ public class AuthController {
         return ApiResponse.ok("获取成功", dto);
     }
 
-
     // 用户登出
     @PostMapping("/logout")
     public ApiResponse<Void> logout(HttpServletRequest request) {
@@ -169,7 +167,6 @@ public class AuthController {
             // 调用业务层保存头像，返回是否成功
             boolean success = userService.storeAvatar(username, file);
 
-
             if (success) {
                 Optional<User> userOpt = userRepository.findByUsername(username);
                 if (userOpt.isPresent()) {
@@ -197,12 +194,15 @@ public class AuthController {
     }
 
     /** 请求体和内部 DTO **/
-    @Getter @Setter
+    @Getter
+    @Setter
     public static class LoginRequest {
         private String username;
         private String password;
     }
-    @Getter @Setter
+
+    @Getter
+    @Setter
     public static class RegisterRequest {
         private String username;
         private String password;
@@ -210,7 +210,9 @@ public class AuthController {
         private String major;
         private String email;
     }
-    @Getter @Setter
+
+    @Getter
+    @Setter
     public static class ChangePasswordRequest {
         private String username;
         private String oldPassword;

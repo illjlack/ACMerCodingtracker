@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +22,7 @@ public interface ExtOjPbInfoRepository extends JpaRepository<ExtOjPbInfo, Long> 
     /**
      * 按 OJ 平台枚举值查询对应的题目统计信息列表
      */
+    @EntityGraph(attributePaths = "tags")
     List<ExtOjPbInfo> findByOjName(OJPlatform ojName);
 
     /**

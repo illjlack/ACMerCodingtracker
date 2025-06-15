@@ -298,3 +298,10 @@ export function getOJPlatforms() {
     method: 'get'
   })
 }
+
+export function getAllUsers() {
+  return request({
+    url: '/api/users/list',
+    method: 'get'
+  })
+}

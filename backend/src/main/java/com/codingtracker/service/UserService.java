@@ -193,11 +193,11 @@ public class UserService {
     }
 
     /**
-     * 获取所有用户（不包括管理员）
+     * 获取所有用户（不包括超级管理员）
      */
     public List<User> allUser() {
         return userRepository.findAll().stream()
-                .filter(user -> !user.isAdmin())
+                .filter(user -> !user.isSuperAdmin())
                 .collect(Collectors.toList());
     }
 

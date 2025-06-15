@@ -18,6 +18,19 @@ import log from 'echarts/src/scale/Log'
  * - 添加 OJ 外部链接分组
  */
 export const constantRoutes = [
+  // Dashboard
+  {
+    path: '/dashboard',
+    component: Layout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/dashboard/index.vue'),
+        name: 'Dashboard',
+        meta: { title: '仪表盘', icon: 'dashboard', noCache: true }
+      }
+    ]
+  },
   // 重定向
   {
     path: '/redirect',
@@ -105,44 +118,11 @@ export const constantRoutes = [
       }
     ]
   },
-  // OJ 外部链接分组
-  // {
-  //   path: '/userMananger',
-  //   component: Layout,
-  //   children: [
-  //     {
-  //       path: '',
-  //       component: () => import('@/views/userMananger/index'),
-  //       name: 'userMananger',
-  //       meta: { title: '用户管理', icon: 'peoples', noCache: true, }
-  //     }
-  //   ]
-  // },
-  {
-    path: '/oj',
-    component: Layout,
-    alwaysShow: true,
-    meta: { title: '在线评测系统', icon: 'link' },
-    children: [
-      {
-        path: 'https://www.luogu.com.cn/',
-        meta: { title: 'Luogu', icon: 'link' }
-      },
-      {
-        path: 'https://codeforces.com/',
-        meta: { title: 'Codeforces', icon: 'link' }
-      },
-      {
-        path: 'http://poj.org/',
-        meta: { title: 'POJ', icon: 'link' }
-      }
-    ]
-  },
 
   // 默认主页（跳转到个人信息）
   {
     path: '/',
-    redirect: '/profile',
+    redirect: '/dashboard',
     hidden: true
   },
   // 兜底：匹配不到
@@ -207,21 +187,28 @@ export const asyncRoutes = [
         }
       }
     ]
+  },
+  // OJ 外部链接分组 - 移到动态路由最后
+  {
+    path: '/oj',
+    component: Layout,
+    alwaysShow: true,
+    meta: { title: '在线评测系统', icon: 'link' },
+    children: [
+      {
+        path: 'https://www.luogu.com.cn/',
+        meta: { title: 'Luogu', icon: 'link' }
+      },
+      {
+        path: 'https://codeforces.com/',
+        meta: { title: 'Codeforces', icon: 'link' }
+      },
+      {
+        path: 'http://poj.org/',
+        meta: { title: 'POJ', icon: 'link' }
+      }
+    ]
   }
-  // 个人做题信息页：可选传参 userId
-  // {
-  //   path: '/userPbInfo',
-  //   component: Layout,
-  //   children: [
-  //     {
-  //       path: ':name',
-  //       component: () => import('@/views/userPbInfo/index'),
-  //       name: 'UserPbInfo',
-  //       props: route => ({ name: route.params.name }),
-  //       meta: { title: '个人做题信息', icon: 'user', noCache: true, needDynamic: true }
-  //     }
-  //   ]
-  // }
 ]
 
 const createRouter = () =>

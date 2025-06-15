@@ -15,7 +15,11 @@
           @error="onAvatarError"
         >
           <div>Hello</div>
-          {{ user.role }}
+          <div class="user-roles">
+            <span v-for="role in userRoles" :key="role" :class="'role-' + role.toLowerCase()">
+              {{ role }}
+            </span>
+          </div>
         </pan-thumb>
       </div>
       <div class="box-center">
@@ -109,6 +113,9 @@ export default {
       if (!avatar || this.avatarError) return this.defaultAvatar
       if (avatar.startsWith('http')) return avatar
       return this.baseApiUrl + avatar
+    },
+    userRoles() {
+      return this.user.role.split(' | ')
     }
   },
   methods: {
@@ -139,6 +146,35 @@ export default {
   }
   .user-class {
     margin-top: 8px;
+  }
+  .user-roles {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+
+    span {
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .role-super_admin {
+      background-color: #f56c6c;
+      color: white;
+    }
+
+    .role-admin {
+      background-color: #e6a23c;
+      color: white;
+    }
+
+    .role-user {
+      background-color: #67c23a;
+      color: white;
+    }
   }
 }
 

@@ -165,7 +165,7 @@
 
 <script>
 import { fetchAcCounts, fetchTryCounts, fetchLastUpdate, manualRebuild, forceUpdateDB } from '@/api/usertry'
-import { getAllUserTags } from '@/api/user'
+import { getAllUserTags, getAllUsers } from '@/api/user'
 import { getOJPlatforms } from '@/api/user'
 import { export_json_to_excel } from '@/vendor/Export2Excel'
 import { mapGetters } from 'vuex'
@@ -177,6 +177,7 @@ export default {
       loading: false,
       userStatsMap: {},
       list: [],
+      allUsers: [], // 存储所有用户信息
       allPlatforms: [], // 所有可用平台
       selectedPlatforms: [], // 选中的平台
       allTags: [], // 所有标签
@@ -259,11 +260,21 @@ export default {
     }
   },
   watch: {
-    startDate(newVal, oldVal) {
-      if (newVal !== oldVal) this.fetchData()
+    startDate: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.fetchData()
+        }
+      }
     },
-    endDate(newVal, oldVal) {
-      if (newVal !== oldVal) this.fetchData()
+    endDate: {
+      immediate: true,
+      handler(newVal) {
+        if (newVal) {
+          this.fetchData()
+        }
+      }
     },
     selectedPlatforms(newVal) {
       this.$store.dispatch('allPbInfo/setSelectedPlatforms', newVal)
@@ -277,17 +288,27 @@ export default {
   },
   methods: {
     async initializeData() {
-      // 从 store 获取已保存的设置
-      this.selectedPlatforms = [...this.allPbInfoSelectedPlatforms]
-      this.selectedTags = [...this.allPbInfoSelectedTags]
+      try {
+        // 从 store 获取已保存的设置
+        this.selectedPlatforms = [...this.allPbInfoSelectedPlatforms]
+        this.selectedTags = [...this.allPbInfoSelectedTags]
 
-      // 初始化各种数据
-      await Promise.all([
-        this.fetchPlatforms(),
-        this.fetchTags(),
-        this.fetchData(),
-        this.fetchLastUpdateTime()
-      ])
+        // 初始化各种数据
+        await Promise.all([
+          this.fetchPlatforms(),
+          this.fetchTags(),
+          this.fetchAllUsers(),
+          this.fetchLastUpdateTime()
+        ])
+
+        // 确保有日期后再获取数据
+        if (this.startDate && this.endDate) {
+          await this.fetchData()
+        }
+      } catch (error) {
+        console.error('初始化数据失败:', error)
+        this.$message.error('初始化数据失败')
+      }
     },
 
     async fetchPlatforms() {
@@ -322,6 +343,22 @@ export default {
       }
     },
 
+    async fetchAllUsers() {
+      try {
+        const res = await getAllUsers()
+        if (res.success) {
+          this.allUsers = res.data || []
+        } else {
+          this.$message.error(res.message || '获取用户列表失败')
+          this.allUsers = []
+        }
+      } catch (error) {
+        console.error('获取用户列表失败:', error)
+        this.$message.error('获取用户列表失败')
+        this.allUsers = []
+      }
+    },
+
     fillPlatformsCounts(counts = {}) {
       const result = {}
       this.allPlatforms.forEach(p => {
@@ -331,8 +368,6 @@ export default {
     },
 
     async fetchData() {
-      if (!this.startDate || !this.endDate) return
-
       const params = {
         start: this.startDate.toISOString().slice(0, 10) + 'T00:00:00',
         end: this.endDate.toISOString().slice(0, 10) + 'T23:59:59'
@@ -344,16 +379,26 @@ export default {
 
         this.userStatsMap = {}
 
+        // 首先初始化所有用户的数据
+        this.allUsers.forEach(user => {
+          this.userStatsMap[user.id] = {
+            userId: user.id,
+            username: user.username,
+            realName: user.realName,
+            acCount: 0,
+            tryCount: 0,
+            acCounts: this.fillPlatformsCounts(),
+            tryCounts: this.fillPlatformsCounts(),
+            tags: user.tags || []
+          }
+        })
+
+        // 然后更新有解题记录的用户数据
         ;(acRes.data || []).forEach(u => {
           const acCount = Object.values(u.counts || {}).reduce((sum, val) => sum + (parseInt(val) || 0), 0)
-          this.userStatsMap[u.userId] = {
-            userId: u.userId,
-            username: u.username,
-            realName: u.realName,
-            acCount,
-            tryCount: 0,
-            acCounts: this.fillPlatformsCounts(u.counts),
-            tryCounts: this.fillPlatformsCounts()
+          if (this.userStatsMap[u.userId]) {
+            this.userStatsMap[u.userId].acCount = acCount
+            this.userStatsMap[u.userId].acCounts = this.fillPlatformsCounts(u.counts)
           }
         })
         ;(tryRes.data || []).forEach(u => {
@@ -361,16 +406,6 @@ export default {
           if (this.userStatsMap[u.userId]) {
             this.userStatsMap[u.userId].tryCount = tryCount
             this.userStatsMap[u.userId].tryCounts = this.fillPlatformsCounts(u.counts)
-          } else {
-            this.userStatsMap[u.userId] = {
-              userId: u.userId,
-              username: u.username,
-              realName: u.realName,
-              acCount: 0,
-              tryCount,
-              acCounts: this.fillPlatformsCounts(),
-              tryCounts: this.fillPlatformsCounts(u.counts)
-            }
           }
         })
 
