@@ -181,7 +181,7 @@ INSERT INTO `user` (
     avatar,
     active
 ) VALUES (
-    'super_admin',
+    'admin',
     '$10$35yDDNSm6g6KdkPCbtTMfe/tFY6YQepZnSxwXIFxlTqltfQj1DTy6', -- 123456的加密
     '系统管理员',
     '3379782451@qq.com',
@@ -195,5 +195,5 @@ INSERT INTO `user` (
 INSERT INTO `user_roles` (
     user_id,
     roles
-) SELECT id, 'ADMIN'
+) SELECT id, 'SUPER_ADMIN'
   FROM `user` WHERE username = 'admin';

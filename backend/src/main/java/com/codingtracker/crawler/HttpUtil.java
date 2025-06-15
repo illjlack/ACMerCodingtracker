@@ -30,9 +30,9 @@ public class HttpUtil {
     /**
      * 重试执行任务，直到返回非空结果或达到最大重试次数后抛出最后一次异常
      *
-     * @param task 要执行的 Callable 任务
+     * @param task  要执行的 Callable 任务
      * @param times 最大重试次数
-     * @param <T>  返回类型
+     * @param <T>   返回类型
      * @return 任务返回值
      * @throws Exception 最后一次异常
      */
@@ -63,7 +63,7 @@ public class HttpUtil {
             return repeatDo(() -> {
                 logger.info("[*] readURL: {}", urlString);
                 return IOUtils.toString(new URL(urlString), "UTF-8");
-            }, 5);
+            }, 2);
         } catch (Exception e) {
             throw new RuntimeException("readURL 失败: " + urlString, e);
         }
@@ -83,7 +83,7 @@ public class HttpUtil {
                         .timeout(8000)
                         .ignoreContentType(true)
                         .get();
-            }, 5);
+            }, 2);
         } catch (Exception e) {
             throw new RuntimeException("readJsoupURL 失败: " + urlString, e);
         }
@@ -106,8 +106,7 @@ public class HttpUtil {
                 conn.setReadTimeout(5000);
 
                 BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream(), "UTF-8")
-                );
+                        new InputStreamReader(conn.getInputStream(), "UTF-8"));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -115,14 +114,13 @@ public class HttpUtil {
                 }
                 reader.close();
                 return sb.toString();
-            }, 5);
+            }, 2);
         } catch (Exception e) {
             throw new RuntimeException("readHttpsURL 失败: " + urlString, e);
         }
     }
 
-
-// =====================================带cookie的
+    // =====================================带cookie的
 
     /**
      * 带 Cookie 的原生 URL GET 请求，最多重试 5 次
@@ -151,7 +149,7 @@ public class HttpUtil {
                 try (InputStream in = conn.getInputStream()) {
                     return IOUtils.toString(in, StandardCharsets.UTF_8);
                 }
-            }, 5);
+            }, 2);
         } catch (Exception e) {
             throw new RuntimeException("readURL with cookies 失败: " + urlString, e);
         }
@@ -173,7 +171,7 @@ public class HttpUtil {
                         .ignoreContentType(true)
                         .cookies(cookies == null ? Map.of() : cookies)
                         .get();
-            }, 5);
+            }, 2);
         } catch (Exception e) {
             throw new RuntimeException("readJsoupURL with cookies 失败: " + urlString, e);
         }
@@ -205,8 +203,7 @@ public class HttpUtil {
                 }
 
                 BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8)
-                );
+                        new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
                 StringBuilder sb = new StringBuilder();
                 String line;
                 while ((line = reader.readLine()) != null) {
@@ -214,9 +211,44 @@ public class HttpUtil {
                 }
                 reader.close();
                 return sb.toString();
-            }, 5);
+            }, 2);
         } catch (Exception e) {
             throw new RuntimeException("readHttpsURL with cookies 失败: " + urlString, e);
+        }
+    }
+
+    /**
+     * 检查URL的HTTP状态码（带Cookie），用于token验证
+     *
+     * @param urlString 请求地址
+     * @param cookies   要注入的 Cookie（key→value）
+     * @return HTTP状态码
+     */
+    public int checkHttpStatus(String urlString, Map<String, String> cookies) {
+        try {
+            return repeatDo(() -> {
+                logger.debug("[*] checkHttpStatus: {}", urlString);
+                HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                conn.setInstanceFollowRedirects(false); // 不自动跟随重定向
+
+                // 拼装 Cookie 头
+                if (cookies != null && !cookies.isEmpty()) {
+                    String cookieHeader = cookies.entrySet().stream()
+                            .map(e -> e.getKey() + "=" + e.getValue())
+                            .collect(Collectors.joining("; "));
+                    conn.setRequestProperty("Cookie", cookieHeader);
+                }
+
+                int statusCode = conn.getResponseCode();
+                conn.disconnect();
+                return statusCode;
+            }, 2);
+        } catch (Exception e) {
+            logger.error("checkHttpStatus 失败: {}", urlString, e);
+            return 500; // 返回服务器错误状态码
         }
     }
 }

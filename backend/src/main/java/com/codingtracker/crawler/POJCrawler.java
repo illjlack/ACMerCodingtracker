@@ -48,6 +48,20 @@ public class POJCrawler {
     }
 
     /**
+     * 验证POJ网站连接状态
+     */
+    public boolean validateConnection() {
+        try {
+            String testUrl = "http://poj.org/";
+            Document doc = httpUtil.readJsoupURL(testUrl);
+            return doc.title().toLowerCase().contains("poj") || doc.text().contains("Peking University");
+        } catch (Exception e) {
+            logger.error("验证POJ连接失败: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * 拉取或创建单个 POJ 题目信息实体
      */
     private ExtOjPbInfo fetchProblem(String pid) {

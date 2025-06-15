@@ -20,11 +20,19 @@ public class ExtOjLink implements Serializable {
     @Enumerated(EnumType.STRING)
     private OJPlatform oj;
 
-    /** OJ 平台首页或题目列表链接模板 */
+    /** OJ 平台首页链接 */
     @Column(length = 1024)
-    private String indexLink;
+    private String homepageLink;
 
-    /** 获取用户 AC/提交记录的链接模板 */
+    /** 登录页面链接 */
+    @Column(length = 1024)
+    private String loginPageLink;
+
+    /** 获取用户提交记录的链接模板 */
+    @Column(length = 1024)
+    private String submissionRecordsLink;
+
+    /** 获取用户 AC/提交记录的链接模板 (保留兼容性) */
     @Column(length = 1024)
     private String userInfoLink;
 
@@ -40,7 +48,15 @@ public class ExtOjLink implements Serializable {
     @Column(length = 1024)
     private String loginLink;
 
-    /** 登录后返回的令牌（Token） */
+    /** 登录后返回的令牌（Token/Cookie） */
     @Column(length = 2048)
     private String authToken;
+
+    /** Token格式说明 */
+    @Column(length = 512)
+    private String tokenFormat;
+
+    /** 是否需要Token认证 */
+    @Column
+    private Boolean requiresToken;
 }

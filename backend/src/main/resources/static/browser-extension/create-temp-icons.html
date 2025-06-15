@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>创建临时图标</title>
+</head>
+<body>
+    <h1>临时图标生成器</h1>
+    <button onclick="createIcons()">生成图标</button>
+    <div id="status"></div>
+
+    <script>
+        function createSimpleIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // 简单的蓝色背景
+            ctx.fillStyle = '#4285f4';
+            ctx.fillRect(0, 0, size, size);
+            
+            // 白色文字
+            ctx.fillStyle = 'white';
+            ctx.font = `${size/4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.fillText('T', size/2, size/2 + size/8);
+            
+            return canvas;
+        }
+        
+        function downloadCanvas(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        function createIcons() {
+            const status = document.getElementById('status');
+            status.innerHTML = '正在生成图标...';
+            
+            setTimeout(() => {
+                downloadCanvas(createSimpleIcon(16), 'icon16.png');
+            }, 100);
+            
+            setTimeout(() => {
+                downloadCanvas(createSimpleIcon(48), 'icon48.png');
+            }, 600);
+            
+            setTimeout(() => {
+                downloadCanvas(createSimpleIcon(128), 'icon128.png');
+                status.innerHTML = '图标生成完成！请将下载的文件放到扩展目录中。';
+            }, 1100);
+        }
+    </script>
+</body>
+</html> 

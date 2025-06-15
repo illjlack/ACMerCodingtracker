@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            width: 400px;
+            min-height: 500px;
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            margin: 0;
+            border-radius: 0;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 0;
+        }
+        .header h3 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .platform {
+            margin-bottom: 16px;
+            padding: 16px;
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .platform:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .platform.current-platform {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #f0f4ff 0%, #e6f0ff 100%);
+        }
+        .platform-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .token-info {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-1px);
+        }
+        .btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-secondary {
+            background: #718096;
+        }
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+        .btn-success {
+            background: #48bb78;
+        }
+        .btn-success:hover {
+            background: #38a169;
+        }
+        .status {
+            margin-top: 5px;
+            font-size: 12px;
+        }
+        .success {
+            color: #67c23a;
+        }
+        .error {
+            color: #f56c6c;
+        }
+        .warning {
+            color: #e6a23c;
+        }
+        .token-display {
+            background: #f7fafc;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+            font-size: 11px;
+            word-break: break-all;
+            max-height: 80px;
+            overflow-y: auto;
+            margin-top: 8px;
+            border: 1px solid #e2e8f0;
+            position: relative;
+        }
+        .actions-bar {
+            padding: 16px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+        .platform-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .status-success .status-indicator {
+            background: #48bb78;
+        }
+        .status-error .status-indicator {
+            background: #f56565;
+        }
+        .status-warning .status-indicator {
+            background: #ed8936;
+        }
+        .status-loading .status-indicator {
+            background: #4299e1;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            border-radius: 8px;
+            color: white;
+            font-size: 14px;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast-success {
+            background: #48bb78;
+        }
+        .toast-error {
+            background: #f56565;
+        }
+        .toast-warning {
+            background: #ed8936;
+        }
+        .toast-info {
+            background: #4299e1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h3>🔑 Token 获取助手</h3>
+            <p>自动获取OJ平台的登录Token</p>
+        </div>
+
+        <div class="content">
+            <div id="platforms">
+                <!-- 平台信息将通过JavaScript动态生成 -->
+            </div>
+        </div>
+
+        <div class="actions-bar">
+            <button id="refreshBtn" class="btn">
+                <span>🔄</span>
+                刷新检测
+            </button>
+            <button id="copyAllBtn" class="btn btn-secondary">
+                <span>📋</span>
+                复制所有
+            </button>
+            <button id="settingsBtn" class="btn btn-secondary">
+                <span>⚙️</span>
+                设置
+            </button>
+        </div>
+    </div>
+
+    <div style="margin-top: 15px; font-size: 12px; color: #666;">
+        <p><strong>使用说明：</strong></p>
+        <ul style="margin: 5px 0; padding-left: 20px;">
+            <li>确保已登录对应的OJ平台</li>
+            <li>点击"获取Token"按钮</li>
+            <li>复制Token到Coding Tracker</li>
+        </ul>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html> 

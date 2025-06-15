@@ -55,7 +55,15 @@ public class UserService {
         }
         String hashedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(hashedPassword);
-        user.getRoles().add(User.Type.USER); // 新注册用户默认为普通用户
+
+        // 检查是否是第一个用户，如果是则设为超级管理员
+        long userCount = userRepository.count();
+        if (userCount == 0) {
+            user.getRoles().add(User.Type.SUPER_ADMIN); // 第一个用户为超级管理员
+        } else {
+            user.getRoles().add(User.Type.USER); // 其他用户默认为普通用户
+        }
+
         userRepository.save(user);
 
         updateUserCountStat();

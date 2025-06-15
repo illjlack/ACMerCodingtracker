@@ -1,74 +1,132 @@
-{
-  "codeforces": {
-    "indexLink": "https://codeforces.com/",
-    "userInfoLink": "https://codeforces.com/api/user.status?handle=%s",
+[
+  {
+    "oj": "LUOGU",
+    "homepageLink": "https://www.luogu.com.cn/",
+    "loginPageLink": "https://www.luogu.com.cn/auth/login",
+    "submissionRecordsLink": "https://www.luogu.com.cn/record/list?user=%s&page=%d",
+    "userInfoLink": "https://www.luogu.com.cn/user/%s?_contentOnly=1&page=%d",
+    "pbStatusLink": "https://www.luogu.com.cn/problem/list?page=%d",
+    "problemLink": "https://www.luogu.com.cn/problem/%s",
+    "loginLink": "https://www.luogu.com.cn/api/auth/userPassLogin",
+    "authToken": "__client_id=e76e0355af9c776997c21a3b50be18d9817dbc13; _uid=576200",
+    "tokenFormat": "__client_id=xxx; _uid=xxx",
+    "requiresToken": true
+  },
+  {
+    "oj": "CODEFORCES",
+    "homepageLink": "https://codeforces.com/",
+    "loginPageLink": "https://codeforces.com/enter",
+    "submissionRecordsLink": "https://codeforces.com/submissions/%s",
+    "userInfoLink": "https://codeforces.com/api/user.status?handle=%s&from=%d&count=1000",
     "pbStatusLink": "https://codeforces.com/api/problemset.problems",
-    "problemLink": "https://codeforces.com/contest/%s/problem/%s",
+    "problemLink": "https://codeforces.com/problem/%s",
     "loginLink": "https://codeforces.com/enter",
-    "authToken": ""
+    "authToken": "",
+    "tokenFormat": "RCPC=xxx; 39ce7=xxx; JSESSIONID=xxx",
+    "requiresToken": false
   },
-  "vjudge": {
-    "indexLink": "https://vjudge.net/",
-    "userInfoLink": "https://vjudge.net/user/%s",
-    "pbStatusLink": "",
-    "problemLink": "",
-    "loginLink": "https://vjudge.net/user/login",
-    "authToken": ""
+  {
+    "oj": "LEETCODE",
+    "homepageLink": "https://leetcode.com/",
+    "loginPageLink": "https://leetcode.com/accounts/login/",
+    "submissionRecordsLink": "https://leetcode.com/api/submissions/?offset=%d&limit=20",
+    "userInfoLink": "https://leetcode.com/graphql/",
+    "pbStatusLink": "https://leetcode.com/api/problems/all/",
+    "problemLink": "https://leetcode.com/problems/%s/",
+    "loginLink": "https://leetcode.com/accounts/login/",
+    "authToken": "",
+    "tokenFormat": "csrftoken=xxx; LEETCODE_SESSION=xxx; sessionid=xxx",
+    "requiresToken": true
   },
-  "beecrowd": {
-    "indexLink": "https://judge.beecrowd.com/",
-    "userInfoLink": "https://judge.beecrowd.com/en/profile/%s",
-    "pbStatusLink": "",
-    "problemLink": "https://resources.beecrowd.com/repository/UOJ_%s_en.html",
-    "loginLink": "https://judge.beecrowd.com/en/login",
-    "authToken": ""
-  },
-  "hdu": {
-    "indexLink": "http://acm.hdu.edu.cn/",
+  {
+    "oj": "HDU",
+    "homepageLink": "http://acm.hdu.edu.cn/",
+    "loginPageLink": "http://acm.hdu.edu.cn/userloginex.php?action=login",
+    "submissionRecordsLink": "http://acm.hdu.edu.cn/status.php?user=%s&first=%d",
     "userInfoLink": "http://acm.hdu.edu.cn/userstatus.php?user=%s",
-    "pbStatusLink": "",
+    "pbStatusLink": "http://acm.hdu.edu.cn/listproblem.php?vol=%d",
     "problemLink": "http://acm.hdu.edu.cn/showproblem.php?pid=%s",
-    "loginLink": "",
-    "authToken": ""
+    "loginLink": "http://acm.hdu.edu.cn/userloginex.php?action=login",
+    "authToken": "",
+    "tokenFormat": "PHPSESSID=xxx",
+    "requiresToken": false
   },
-  "poj": {
-    "indexLink": "http://poj.org/",
+  {
+    "oj": "POJ",
+    "homepageLink": "http://poj.org/",
+    "loginPageLink": "http://poj.org/login",
+    "submissionRecordsLink": "http://poj.org/status?user_id=%s&top=%d",
     "userInfoLink": "http://poj.org/userstatus?user_id=%s",
-    "pbStatusLink": "",
+    "pbStatusLink": "http://poj.org/problemlist?volume=%d",
     "problemLink": "http://poj.org/problem?id=%s",
     "loginLink": "http://poj.org/login",
-    "authToken": ""
+    "authToken": "",
+    "tokenFormat": "JSESSIONID=xxx",
+    "requiresToken": false
   },
-  "leetcode": {
-    "indexLink": "https://leetcode.cn/",
-    "userInfoLink": "https://leetcode.cn/u/%s",
-    "pbStatusLink": "https://leetcode.cn/api/problems/all/",
-    "problemLink": "https://leetcode.cn/problems/%s",
-    "loginLink": "https://leetcode.cn/accounts/login/",
-    "authToken": ""
-  },
-  "luogu": {
-    "indexLink": "https://www.luogu.com.cn/",
-    "userInfoLink": "https://www.luogu.com.cn/record/list?user=%s&page=%s&_contentOnly=1",
-    "pbStatusLink": "",
-    "problemLink": "https://www.luogu.com.cn/problem/%s",
-    "loginLink": "https://www.luogu.com.cn/account/login",
-    "authToken": "__client_id=e76e0355af9c776997c21a3b50be18d9817dbc13; _uid=576200"
-  },
-  "atcoder": {
-    "indexLink": "https://atcoder.jp/",
-    "userInfoLink": "https://atcoder.jp/users/%s",
-    "pbStatusLink": "",
+  {
+    "oj": "ATCODER",
+    "homepageLink": "https://atcoder.jp/",
+    "loginPageLink": "https://atcoder.jp/login",
+    "submissionRecordsLink": "https://atcoder.jp/users/%s/history",
+    "userInfoLink": "https://atcoder.jp/users/%s/history/json?page=%d",
+    "pbStatusLink": "https://atcoder.jp/contests/",
     "problemLink": "https://atcoder.jp/contests/%s/tasks/%s",
     "loginLink": "https://atcoder.jp/login",
-    "authToken": ""
+    "authToken": "",
+    "tokenFormat": "_session_id=xxx; REVEL_SESSION=xxx",
+    "requiresToken": true
   },
-  "nowcoder": {
-    "indexLink": "https://ac.nowcoder.com/",
-    "userInfoLink": "",
-    "pbStatusLink": "",
-    "problemLink": "",
-    "loginLink": "https://www.nowcoder.com/login",
-    "authToken": ""
+  {
+    "oj": "VIRTUAL_JUDGE",
+    "homepageLink": "https://vjudge.net/",
+    "loginPageLink": "https://vjudge.net/user/login",
+    "submissionRecordsLink": "https://vjudge.net/status/data?draw=1&start=%d&length=20&un=%s",
+    "userInfoLink": "https://vjudge.net/user/%s",
+    "pbStatusLink": "https://vjudge.net/problem/data",
+    "problemLink": "https://vjudge.net/problem/%s",
+    "loginLink": "https://vjudge.net/user/login",
+    "authToken": "",
+    "tokenFormat": "Jax.Q=xxx; JSESSIONID=xxx",
+    "requiresToken": false
+  },
+  {
+    "oj": "SPOJ",
+    "homepageLink": "https://www.spoj.com/",
+    "loginPageLink": "https://www.spoj.com/login/",
+    "submissionRecordsLink": "https://www.spoj.com/status/%s/",
+    "userInfoLink": "https://www.spoj.com/users/%s/",
+    "pbStatusLink": "https://www.spoj.com/problems/classical/",
+    "problemLink": "https://www.spoj.com/problems/%s/",
+    "loginLink": "https://www.spoj.com/login/",
+    "authToken": "",
+    "tokenFormat": "SPOJ=xxx; sessionid=xxx",
+    "requiresToken": false
+  },
+  {
+    "oj": "CODECHEF",
+    "homepageLink": "https://www.codechef.com/",
+    "loginPageLink": "https://www.codechef.com/login",
+    "submissionRecordsLink": "https://www.codechef.com/users/%s",
+    "userInfoLink": "https://www.codechef.com/api/user/%s",
+    "pbStatusLink": "https://www.codechef.com/problems/school",
+    "problemLink": "https://www.codechef.com/problems/%s",
+    "loginLink": "https://www.codechef.com/login",
+    "authToken": "",
+    "tokenFormat": "SESS=xxx; csrftoken=xxx",
+    "requiresToken": false
+  },
+  {
+    "oj": "TOPCODER",
+    "homepageLink": "https://www.topcoder.com/",
+    "loginPageLink": "https://accounts.topcoder.com/member",
+    "submissionRecordsLink": "https://www.topcoder.com/members/%s",
+    "userInfoLink": "https://api.topcoder.com/v5/members/%s/stats",
+    "pbStatusLink": "https://www.topcoder.com/challenges",
+    "problemLink": "https://www.topcoder.com/challenges/%s",
+    "loginLink": "https://accounts.topcoder.com/member",
+    "authToken": "",
+    "tokenFormat": "tcjwt=xxx; tcsso=xxx",
+    "requiresToken": true
   }
-}
+]

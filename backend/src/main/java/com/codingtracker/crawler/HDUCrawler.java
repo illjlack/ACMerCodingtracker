@@ -50,6 +50,20 @@ public class HDUCrawler {
     }
 
     /**
+     * 验证HDU网站连接状态
+     */
+    public boolean validateConnection() {
+        try {
+            String testUrl = "http://acm.hdu.edu.cn/";
+            Document doc = httpUtil.readJsoupURL(testUrl);
+            return doc.title().contains("HDU") || doc.title().contains("杭电");
+        } catch (Exception e) {
+            logger.error("验证HDU连接失败: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * 获取或创建指定 HDU 题目的基础信息，包括链接
      */
     private ExtOjPbInfo fetchProblem(String pid) {

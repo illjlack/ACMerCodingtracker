@@ -125,6 +125,21 @@ public class CFCrawler {
   }
 
   /**
+   * 验证Codeforces API连接状态
+   */
+  public boolean validateConnection() {
+    try {
+      String testUrl = "https://codeforces.com/api/user.info?handles=tourist";
+      String response = httpUtil.readURL(testUrl);
+      JsonNode root = mapper.readTree(response);
+      return "OK".equals(root.path("status").asText());
+    } catch (Exception e) {
+      logger.error("验证Codeforces连接失败: {}", e.getMessage());
+      return false;
+    }
+  }
+
+  /**
    * 获取某用户的所有提交记录，并映射成 UserTryProblem 实体列表
    *
    * @param user 当前用户名

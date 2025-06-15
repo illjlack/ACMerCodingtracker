@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Coding Tracker Token Helper",
+  "version": "1.0",
+  "description": "自动获取OJ平台的Token用于Coding Tracker",
+  "permissions": [
+    "activeTab",
+    "cookies",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.luogu.com.cn/*",
+    "https://leetcode.com/*",
+    "https://leetcode.cn/*",
+    "https://codeforces.com/*",
+    "https://atcoder.jp/*",
+    "https://www.topcoder.com/*",
+    "https://vjudge.net/*",
+    "https://www.spoj.com/*",
+    "https://www.codechef.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "获取Token"
+  },
+  "background": {
+    "service_worker": "background.js"
+  }
+} 

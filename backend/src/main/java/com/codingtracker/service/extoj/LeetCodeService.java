@@ -1,37 +1,38 @@
 package com.codingtracker.service.extoj;
 
-import com.codingtracker.crawler.HDUCrawler;
 import com.codingtracker.crawler.HttpUtil;
+import com.codingtracker.crawler.LeetCodeCrawler;
 import com.codingtracker.model.*;
 import com.codingtracker.repository.ExtOjLinkRepository;
 import com.codingtracker.repository.ExtOjPbInfoRepository;
-import org.jsoup.nodes.Document;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * HDU 平台实现
+ * LeetCode 平台实现
  */
 @Service
-public class HDUService implements IExtOJAdapter {
+public class LeetCodeService implements IExtOJAdapter {
 
-    private static final Logger logger = LoggerFactory.getLogger(HDUService.class);
+    private static final Logger logger = LoggerFactory.getLogger(LeetCodeService.class);
 
-    private final HDUCrawler hduCrawler;
+    private final LeetCodeCrawler leetCodeCrawler;
     private final ExtOjLinkRepository linkRepo;
     private final ExtOjPbInfoRepository pbInfoRepo;
     private final HttpUtil httpUtil;
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    public HDUService(HDUCrawler hduCrawler,
+    public LeetCodeService(LeetCodeCrawler leetCodeCrawler,
             ExtOjLinkRepository linkRepo,
             ExtOjPbInfoRepository pbInfoRepo,
             HttpUtil httpUtil) {
-        this.hduCrawler = hduCrawler;
+        this.leetCodeCrawler = leetCodeCrawler;
         this.linkRepo = linkRepo;
         this.pbInfoRepo = pbInfoRepo;
         this.httpUtil = httpUtil;
@@ -39,7 +40,7 @@ public class HDUService implements IExtOJAdapter {
 
     @Override
     public OJPlatform getOjType() {
-        return OJPlatform.HDU;
+        return OJPlatform.LEETCODE;
     }
 
     @Override
@@ -50,14 +51,13 @@ public class HDUService implements IExtOJAdapter {
 
     @Override
     public List<UserTryProblem> getUserTriesOnline(User user) {
-        List<UserTryProblem> tries = hduCrawler.userTryProblems(user);
-        logger.info("HDU 用户 {} 共抓取到 {} 条尝试记录", user.getUsername(), tries.size());
+        List<UserTryProblem> tries = leetCodeCrawler.userTryProblems(user);
+        logger.info("LeetCode 用户 {} 共抓取到 {} 条尝试记录", user.getUsername(), tries.size());
         return tries;
     }
 
     @Override
     public List<ExtOjPbInfo> getAllPbInfoOnline() {
-        // 返回本地保存的 HDU 题目信息
         return pbInfoRepo.findByOjName(getOjType());
     }
 
@@ -65,26 +65,26 @@ public class HDUService implements IExtOJAdapter {
     public TokenValidationResult validateToken() {
         try {
             ExtOjLink link = getOjLink();
-            if (!requiresToken()) {
-                return new TokenValidationResult(true, "HDU不需要token认证");
+            if (link.getAuthToken() == null || link.getAuthToken().isBlank()) {
+                return new TokenValidationResult(false, "LeetCode平台未配置认证token", "TOKEN_MISSING");
             }
 
-            if (link == null || link.getAuthToken() == null || link.getAuthToken().trim().isEmpty()) {
-                return new TokenValidationResult(false, "未配置HDU认证token", "TOKEN_MISSING");
+            Map<String, String> cookies = parseToken(link.getAuthToken());
+            if (cookies.isEmpty()) {
+                return new TokenValidationResult(false, "LeetCode平台认证token格式无效", "TOKEN_FORMAT_ERROR");
             }
 
-            // HDU不需要特殊认证，验证网站可访问性
-            logger.info("验证HDU网站可访问性");
+            logger.info("验证LeetCode token");
 
-            boolean isValid = hduCrawler.validateConnection();
+            boolean isValid = leetCodeCrawler.validateConnection(cookies);
             if (isValid) {
-                return new TokenValidationResult(true, "HDU网站连接正常");
+                return new TokenValidationResult(true, "LeetCode平台认证token有效");
             } else {
-                return new TokenValidationResult(false, "HDU网站连接失败", "SITE_ERROR");
+                return new TokenValidationResult(false, "LeetCode平台认证token已失效，需要重新登录", "TOKEN_EXPIRED");
             }
         } catch (Exception e) {
-            logger.error("验证HDU网站时发生异常: {}", e.getMessage());
-            return new TokenValidationResult(false, "HDU网站连接异常: " + e.getMessage(), "NETWORK_ERROR");
+            logger.error("验证LeetCode token时发生异常: {}", e.getMessage());
+            return new TokenValidationResult(false, "LeetCode平台token验证异常: " + e.getMessage(), "VALIDATION_ERROR");
         }
     }
 
@@ -97,7 +97,7 @@ public class HDUService implements IExtOJAdapter {
     @Override
     public String getTokenFormat() {
         ExtOjLink link = getOjLink();
-        return link != null ? link.getTokenFormat() : "PHPSESSID=xxx";
+        return link != null ? link.getTokenFormat() : "csrftoken=xxx; LEETCODE_SESSION=xxx; sessionid=xxx";
     }
 
     @Override
@@ -114,15 +114,11 @@ public class HDUService implements IExtOJAdapter {
 
     @Override
     public TokenFormatValidationResult validateTokenFormat(String tokenString) {
-        if (!requiresToken()) {
-            return new TokenFormatValidationResult(true, "HDU不需要token认证");
-        }
-
         if (tokenString == null || tokenString.trim().isEmpty()) {
             return new TokenFormatValidationResult(false, "Token不能为空");
         }
 
-        List<String> requiredFields = Arrays.asList("PHPSESSID");
+        List<String> requiredFields = Arrays.asList("csrftoken", "LEETCODE_SESSION", "sessionid");
         List<String> missingFields = new ArrayList<>();
 
         Map<String, String> cookies = parseToken(tokenString);
@@ -134,9 +130,9 @@ public class HDUService implements IExtOJAdapter {
         }
 
         if (missingFields.isEmpty()) {
-            return new TokenFormatValidationResult(true, "HDU token格式正确");
+            return new TokenFormatValidationResult(true, "LeetCode token格式正确");
         } else {
-            String message = String.format("HDU token缺少必需字段: %s。正确格式: %s",
+            String message = String.format("LeetCode token缺少必需字段: %s。正确格式: %s",
                     String.join(", ", missingFields), getTokenFormat());
             return new TokenFormatValidationResult(false, message, requiredFields, missingFields);
         }

@@ -67,6 +67,45 @@ public class LeetCodeCrawler {
     }
 
     /**
+     * 验证LeetCode连接状态（使用token）
+     */
+    public boolean validateConnection(Map<String, String> cookies) {
+        try {
+            ExtOjLink link = extOjLinkRepository.findById(getOjType()).orElse(null);
+            if (link == null || link.getHomepageLink() == null) {
+                logger.warn("LeetCode平台链接配置不完整");
+                return false;
+            }
+
+            // 使用配置的首页链接进行验证，尝试访问用户相关页面
+            String testUrl = link.getHomepageLink() + "u/";
+
+            int statusCode = httpUtil.checkHttpStatus(testUrl, cookies);
+
+            // 200表示成功访问，说明token有效
+            // 302可能是重定向到登录页面，说明token失效
+            // 401/403表示未授权，说明token失效
+            if (statusCode == 200) {
+                return true;
+            } else if (statusCode == 302 || statusCode == 401 || statusCode == 403) {
+                return false;
+            } else {
+                // 其他状态码，尝试获取内容进行进一步判断
+                try {
+                    String response = httpUtil.readURL(testUrl, cookies);
+                    return response != null && !response.contains("登录") && !response.contains("sign-in");
+                } catch (Exception e) {
+                    logger.debug("LeetCode连接内容验证失败: {}", e.getMessage());
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("验证LeetCode连接失败: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    /**
      * 获取用户在LeetCode的基本信息
      */
     public Map<String, Object> getUserInfo(String username) {

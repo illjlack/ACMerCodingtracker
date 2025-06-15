@@ -114,7 +114,7 @@ public class UserTryController {
      * 手动异步触发系统重建用户尝试记录（仅管理员可用）
      */
     @PostMapping("/stats/rebuild")
-    public ApiResponse<Void> manualRebuild() {
+    public ApiResponse<Map<String, Object>> manualRebuild() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         logger.info("用户 {} 请求手动重建系统数据", username);
 
@@ -132,6 +132,18 @@ public class UserTryController {
         if (extOjService.isUpdating()) {
             logger.warn("当前已有更新进行中，用户 {} 的重建请求被拒绝", username);
             return ApiResponse.error("系统正在更新，请稍后再试");
+        }
+
+        // 在更新前验证所有平台的token状态
+        Map<String, Object> tokenValidation = extOjService.validateAllTokens();
+        boolean allValid = (Boolean) tokenValidation.get("allValid");
+
+        if (!allValid) {
+            logger.warn("用户 {} 更新数据库时发现token失效", username);
+            Map<String, Object> data = new HashMap<>();
+            data.put("tokenValidation", tokenValidation);
+            data.put("canContinue", true);
+            return new ApiResponse<>(false, "检测到部分平台认证已失效，建议更新token后再进行数据更新", data);
         }
 
         boolean started = extOjService.triggerFlushTriesDB();
@@ -192,5 +204,47 @@ public class UserTryController {
                 "updating", extOjService.isUpdating());
         logger.info("系统更新状态查询完成，updating: {}", extOjService.isUpdating());
         return ApiResponse.ok("状态查询成功", data);
+    }
+
+    /**
+     * 验证所有平台的token状态
+     */
+    @GetMapping("/tokens/validate")
+    public ApiResponse<Map<String, Object>> validateTokens() {
+        logger.info("开始验证所有平台token状态");
+        try {
+            Map<String, Object> result = extOjService.validateAllTokens();
+            logger.info("Token验证完成，整体状态：{}", result.get("allValid"));
+            return ApiResponse.ok("Token验证完成", result);
+        } catch (Exception e) {
+            logger.error("Token验证时发生异常", e);
+            return ApiResponse.error("Token验证失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 强制继续更新（忽略token失效警告）
+     */
+    @PostMapping("/updatedb/force")
+    public ApiResponse<Void> forceUpdateDB() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        logger.info("用户 {} 请求强制更新数据库（忽略token验证）", username);
+
+        Optional<User> userOpt = userService.getUserByUsername(username);
+        if (userOpt.isEmpty()) {
+            logger.warn("尝试强制更新失败，未登录用户：{}", username);
+            return ApiResponse.error("您没有登录");
+        }
+
+        if (extOjService.isUpdating()) {
+            logger.warn("当前已有更新进行中，用户 {} 的强制更新请求被拒绝", username);
+            return ApiResponse.error("系统正在更新，请稍后再试");
+        }
+
+        logger.info("管理员 {} 强制触发了所有用户尝试记录的刷新（忽略token验证）", username);
+        extOjService.flushTriesDB();
+        logger.info("数据库强制更新任务已启动，用户：{}", username);
+
+        return ApiResponse.ok("开始强制更新，这需要几分钟", null);
     }
 }
