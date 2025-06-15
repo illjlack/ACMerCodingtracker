@@ -1,4 +1,4 @@
-package com.codingtracker.controller.api.auth;
+package com.codingtracker.controller.api.admin;
 
 import com.codingtracker.dto.ApiResponse;
 import com.codingtracker.dto.UserCreateRequest;

@@ -8,6 +8,13 @@ const getters = {
   visitedViews: state => state.tagsView.visitedViews,
   cachedViews: state => state.tagsView.cachedViews,
 
+  // allPbInfo模块
+  allPbInfoStartDate: state => state.allPbInfo.startDate,
+  allPbInfoEndDate: state => state.allPbInfo.endDate,
+  allPbInfoSelectedPlatforms: state => state.allPbInfo.selectedPlatforms,
+  allPbInfoSelectedTags: state => state.allPbInfo.selectedTags,
+  allPbInfoSearch: state => state.allPbInfo.search,
+
   token: state => state.user.token,
   name: state => state.user.user.name,
   realName: state => state.user.user.realName,

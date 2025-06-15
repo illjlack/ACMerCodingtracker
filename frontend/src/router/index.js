@@ -183,7 +183,7 @@ export const asyncRoutes = [
         name: 'TokenManagement',
         meta: {
           title: 'Token管理',
-          icon: 'key',
+          icon: 'password',
           noCache: true,
           roles: ['ADMIN', 'SUPER_ADMIN'] // 只允许管理员和超级管理员访问
         }

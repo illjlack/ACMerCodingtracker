@@ -116,6 +116,17 @@ public class HDUCrawler {
             List<UserTryProblem> tries = new ArrayList<>();
             for (String handle : handles) {
                 try {
+                    // 找到对应的UserOJ实体
+                    UserOJ userOj = user.getOjAccounts().stream()
+                            .filter(uo -> uo.getPlatform() == getOjType() && uo.getAccountName().equals(handle))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (userOj == null) {
+                        logger.warn("未找到用户 {} 的 {} 平台账号: {}", user.getUsername(), getOjType(), handle);
+                        continue;
+                    }
+
                     String statusUrl = String.format(statusUrlTpl, handle);
                     logger.info("调用 HDU user status 页面，url：{}", statusUrl);
                     Document doc = httpUtil.readJsoupURL(statusUrl);
@@ -147,6 +158,7 @@ public class HDUCrawler {
                                 // 构造 UserTryProblem
                                 UserTryProblem utp = UserTryProblem.builder()
                                         .user(user)
+                                        .userOj(userOj) // 设置关联的OJ账号
                                         .extOjPbInfo(info)
                                         .ojName(getOjType())
                                         .result(ProblemResult.AC)

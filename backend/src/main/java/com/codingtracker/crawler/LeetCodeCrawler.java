@@ -78,7 +78,7 @@ public class LeetCodeCrawler {
             }
 
             // 使用配置的首页链接进行验证，尝试访问用户相关页面
-            String testUrl = link.getHomepageLink() + "u/";
+            String testUrl = link.getHomepageLink() + "u/user/";
 
             int statusCode = httpUtil.checkHttpStatus(testUrl, cookies);
 
@@ -197,6 +197,17 @@ public class LeetCodeCrawler {
             List<JsonNode> submissions = new ArrayList<>();
             for (String username : usernames) {
                 try {
+                    // 找到对应的UserOJ实体
+                    UserOJ userOj = user.getOjAccounts().stream()
+                            .filter(uo -> uo.getPlatform() == getOjType() && uo.getAccountName().equals(username))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (userOj == null) {
+                        logger.warn("未找到用户 {} 的 {} 平台账号: {}", user.getUsername(), getOjType(), username);
+                        continue;
+                    }
+
                     // LeetCode使用GraphQL，需要POST请求
                     String graphqlQuery = buildSubmissionsQuery(username);
                     String url = String.format(submissionTemplate, username);
@@ -225,7 +236,13 @@ public class LeetCodeCrawler {
                     if (!data.isMissingNode()) {
                         JsonNode submissionList = data.path("recentAcSubmissionList");
                         if (submissionList.isArray()) {
-                            submissionList.forEach(submissions::add);
+                            // 为每个提交记录关联当前的UserOJ
+                            for (JsonNode submission : submissionList) {
+                                // 在submission节点中添加userOj信息（临时存储，用于后续处理）
+                                ((com.fasterxml.jackson.databind.node.ObjectNode) submission).put("userOjId",
+                                        userOj.getId());
+                                submissions.add(submission);
+                            }
                         }
                     }
                 } catch (TokenExpiredException e) {
@@ -286,8 +303,16 @@ public class LeetCodeCrawler {
                         long timestamp = sub.path("timestamp").asLong();
                         LocalDateTime attemptTime = LocalDateTime.ofEpochSecond(timestamp, 0, ZoneOffset.UTC);
 
+                        // 获取关联的UserOJ实体
+                        Integer userOjId = sub.path("userOjId").asInt();
+                        UserOJ userOj = user.getOjAccounts().stream()
+                                .filter(uo -> uo.getId().equals(userOjId))
+                                .findFirst()
+                                .orElse(null);
+
                         return UserTryProblem.builder()
                                 .user(user)
+                                .userOj(userOj) // 设置关联的OJ账号
                                 .extOjPbInfo(infosMap.get(titleSlug))
                                 .ojName(getOjType())
                                 .result(ProblemResult.AC) // LeetCode API通常只返回AC的提交

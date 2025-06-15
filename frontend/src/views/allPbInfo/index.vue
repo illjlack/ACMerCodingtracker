@@ -37,13 +37,47 @@
         style="margin-right: 24px;"
       />
 
+      <el-select
+        v-model="selectedPlatforms"
+        multiple
+        collapse-tags
+        placeholder="筛选平台"
+        style="width: 200px; margin-right: 16px;"
+        clearable
+      >
+        <el-option
+          v-for="platform in allPlatforms"
+          :key="platform.code"
+          :label="platform.name"
+          :value="platform.code"
+        />
+      </el-select>
+
+      <el-select
+        v-model="selectedTags"
+        multiple
+        collapse-tags
+        placeholder="筛选标签"
+        style="width: 200px; margin-right: 16px;"
+        clearable
+      >
+        <el-option
+          v-for="tag in allTags"
+          :key="tag.id"
+          :label="tag.name"
+          :value="tag.id"
+        >
+          <span :style="{ color: tag.color }">{{ tag.name }}</span>
+        </el-option>
+      </el-select>
+
       <el-input
         v-model="search"
         placeholder="搜索用户名或真实姓名"
         clearable
         prefix-icon="el-icon-search"
         class="search-input"
-        style="margin-right: 16px;"
+        style="width: 200px; margin-right: 16px;"
       />
 
       <el-button type="primary" icon="el-icon-refresh" @click="onRefresh">
@@ -57,6 +91,15 @@
         @click="exportExcel"
       >
         导出表格
+      </el-button>
+
+      <el-button
+        type="info"
+        icon="el-icon-refresh-left"
+        style="margin-left: 12px;"
+        @click="resetSettings"
+      >
+        重置筛选
       </el-button>
     </div>
 
@@ -82,6 +125,21 @@
 
         <el-table-column prop="realName" label="真实姓名" min-width="120" />
 
+        <el-table-column prop="tags" label="标签" min-width="120">
+          <template #default="{ row }">
+            <el-tag
+              v-for="tag in row.tags"
+              :key="tag.id"
+              :color="tag.color"
+              :style="{ color: getTextColor(tag.color) }"
+              style="margin-right: 5px; margin-bottom: 2px;"
+              size="mini"
+            >
+              {{ tag.name }}
+            </el-tag>
+          </template>
+        </el-table-column>
+
         <el-table-column label="总数(AC / 尝试)" min-width="120" :sortable="true" :sort-method="sortNumber">
           <template #default="{ row }">
             {{ row.acCount }} / {{ row.tryCount }}
@@ -89,15 +147,15 @@
         </el-table-column>
 
         <el-table-column
-          v-for="platform in platforms"
-          :key="platform"
-          :label="platform"
+          v-for="platform in displayPlatforms"
+          :key="platform.code"
+          :label="platform.name"
           min-width="100"
           :sortable="true"
           :sort-method="sortNumber"
         >
           <template #default="{ row }">
-            {{ (row.acCounts[platform] || 0) + ' / ' + (row.tryCounts[platform] || 0) }}
+            {{ (row.acCounts[platform.code] || 0) + ' / ' + (row.tryCounts[platform.code] || 0) }}
           </template>
         </el-table-column>
       </el-table>
@@ -107,19 +165,22 @@
 
 <script>
 import { fetchAcCounts, fetchTryCounts, fetchLastUpdate, manualRebuild, forceUpdateDB } from '@/api/usertry'
+import { getAllUserTags } from '@/api/user'
+import { getOJPlatforms } from '@/api/user'
 import { export_json_to_excel } from '@/vendor/Export2Excel'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'UserStatsDashboard',
   data() {
     return {
-      startDate: new Date(2021, 0, 1), // 2021年1月1日
-      endDate: new Date(), // 当前时间
-      search: '',
       loading: false,
       userStatsMap: {},
       list: [],
-      platforms: ['CODEFORCES', 'HDU', 'POJ', 'LUOGU'],
+      allPlatforms: [], // 所有可用平台
+      selectedPlatforms: [], // 选中的平台
+      allTags: [], // 所有标签
+      selectedTags: [], // 选中的标签
       pickerOptions: {
         disabledDate(time) {
           const earliest = new Date(2021, 0, 1).getTime()
@@ -132,14 +193,69 @@ export default {
     }
   },
   computed: {
+    ...mapGetters([
+      'allPbInfoStartDate',
+      'allPbInfoEndDate',
+      'allPbInfoSelectedPlatforms',
+      'allPbInfoSelectedTags',
+      'allPbInfoSearch',
+      'roles'
+    ]),
+    startDate: {
+      get() {
+        return this.allPbInfoStartDate
+      },
+      set(value) {
+        this.$store.dispatch('allPbInfo/setStartDate', value)
+      }
+    },
+    endDate: {
+      get() {
+        return this.allPbInfoEndDate
+      },
+      set(value) {
+        this.$store.dispatch('allPbInfo/setEndDate', value)
+      }
+    },
+    search: {
+      get() {
+        return this.allPbInfoSearch
+      },
+      set(value) {
+        this.$store.dispatch('allPbInfo/setSearch', value)
+      }
+    },
+    isAdmin() {
+      return this.roles.includes('ADMIN') || this.roles.includes('SUPER_ADMIN')
+    },
+    // 显示的平台列表（如果有选中的平台，只显示选中的；否则显示所有）
+    displayPlatforms() {
+      if (this.selectedPlatforms.length > 0) {
+        return this.allPlatforms.filter(p => this.selectedPlatforms.includes(p.code))
+      }
+      return this.allPlatforms
+    },
     filteredList() {
+      let filtered = [...this.list]
+
+      // 按搜索关键词筛选
       const kw = this.search.trim().toLowerCase()
-      if (!kw) return this.list
-      return this.list.filter(
-        item =>
-          (item.username && item.username.toLowerCase().includes(kw)) ||
-          (item.realName && item.realName.toLowerCase().includes(kw))
-      )
+      if (kw) {
+        filtered = filtered.filter(
+          item =>
+            (item.username && item.username.toLowerCase().includes(kw)) ||
+            (item.realName && item.realName.toLowerCase().includes(kw))
+        )
+      }
+
+      // 按标签筛选
+      if (this.selectedTags.length > 0) {
+        filtered = filtered.filter(user => {
+          return user.tags && user.tags.some(tag => this.selectedTags.includes(tag.id))
+        })
+      }
+
+      return filtered
     }
   },
   watch: {
@@ -148,17 +264,68 @@ export default {
     },
     endDate(newVal, oldVal) {
       if (newVal !== oldVal) this.fetchData()
+    },
+    selectedPlatforms(newVal) {
+      this.$store.dispatch('allPbInfo/setSelectedPlatforms', newVal)
+    },
+    selectedTags(newVal) {
+      this.$store.dispatch('allPbInfo/setSelectedTags', newVal)
     }
   },
   created() {
-    this.fetchData()
-    this.fetchLastUpdateTime()
+    this.initializeData()
   },
   methods: {
+    async initializeData() {
+      // 从 store 获取已保存的设置
+      this.selectedPlatforms = [...this.allPbInfoSelectedPlatforms]
+      this.selectedTags = [...this.allPbInfoSelectedTags]
+
+      // 初始化各种数据
+      await Promise.all([
+        this.fetchPlatforms(),
+        this.fetchTags(),
+        this.fetchData(),
+        this.fetchLastUpdateTime()
+      ])
+    },
+
+    async fetchPlatforms() {
+      try {
+        const res = await getOJPlatforms()
+        if (res.success) {
+          this.allPlatforms = res.data || []
+        } else {
+          this.$message.error(res.message || '获取平台列表失败')
+          this.allPlatforms = []
+        }
+      } catch (error) {
+        console.error('获取平台列表失败:', error)
+        this.$message.error('获取平台列表失败')
+        this.allPlatforms = []
+      }
+    },
+
+    async fetchTags() {
+      try {
+        const res = await getAllUserTags()
+        if (res.success) {
+          this.allTags = res.data || []
+        } else {
+          this.$message.error(res.message || '获取标签列表失败')
+          this.allTags = []
+        }
+      } catch (error) {
+        console.error('获取标签列表失败:', error)
+        this.$message.error('获取标签列表失败')
+        this.allTags = []
+      }
+    },
+
     fillPlatformsCounts(counts = {}) {
       const result = {}
-      this.platforms.forEach(p => {
-        result[p] = counts[p] || 0
+      this.allPlatforms.forEach(p => {
+        result[p.code] = counts[p.code] || 0
       })
       return result
     },
@@ -221,14 +388,14 @@ export default {
 
     exportExcel() {
       const header = ['序号', '用户名', '真实姓名', '总AC', '总尝试']
-      this.platforms.forEach(p => {
-        header.push(`${p} AC`, `${p} 尝试`)
+      this.displayPlatforms.forEach(p => {
+        header.push(`${p.name} AC`, `${p.name} 尝试`)
       })
 
       const data = this.filteredList.map((row, idx) => {
         const base = [idx + 1, row.username, row.realName, row.acCount, row.tryCount]
-        this.platforms.forEach(p => {
-          base.push(row.acCounts[p], row.tryCounts[p])
+        this.displayPlatforms.forEach(p => {
+          base.push(row.acCounts[p.code] || 0, row.tryCounts[p.code] || 0)
         })
         return base
       })
@@ -240,6 +407,30 @@ export default {
         autoWidth: true,
         bookType: 'xlsx'
       })
+    },
+
+    resetSettings() {
+      this.$store.dispatch('allPbInfo/resetSettings')
+      this.selectedPlatforms = []
+      this.selectedTags = []
+      this.$message.success('设置已重置')
+    },
+
+    // 获取文本颜色（根据背景色）
+    getTextColor(bgColor) {
+      if (!bgColor) return '#000000'
+      let color = bgColor.startsWith('#') ? bgColor.substring(1, 7) : bgColor
+      if (color.length === 3) {
+        color = color.split('').map(char => char + char).join('')
+      }
+      if (color.length !== 6) {
+        return '#000000'
+      }
+      const r = parseInt(color.substring(0, 2), 16)
+      const g = parseInt(color.substring(2, 4), 16)
+      const b = parseInt(color.substring(4, 6), 16)
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000
+      return brightness > 125 ? '#000000' : '#FFFFFF'
     },
 
     async fetchLastUpdateTime() {
@@ -321,7 +512,19 @@ export default {
       this.$router.push('/token-management')
     },
 
-    sortNumber(a, b) {
+    sortNumber(a, b, column) {
+      // 对于 "总数(AC / 尝试)" 列，按 acCount 排序
+      if (column && column.label === '总数(AC / 尝试)') {
+        return (a.acCount || 0) - (b.acCount || 0)
+      }
+      // 对于平台列，按对应平台的AC数排序
+      if (column && column.label && this.displayPlatforms.some(p => column.label === p.name)) {
+        const platform = this.displayPlatforms.find(p => column.label === p.name)
+        if (platform) {
+          return (a.acCounts[platform.code] || 0) - (b.acCounts[platform.code] || 0)
+        }
+      }
+      // 默认数字排序
       return (parseInt(a) || 0) - (parseInt(b) || 0)
     }
   }
@@ -346,16 +549,17 @@ export default {
     user-select: none;
   }
 
-  .controls {
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
+      .controls {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
 
-    .search-input {
-      width: 200px;
-      margin-left: auto;
+      .search-input {
+        width: 200px;
+      }
     }
-  }
 
   .table-wrapper {
     width: 100%;

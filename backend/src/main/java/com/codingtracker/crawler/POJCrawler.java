@@ -114,6 +114,17 @@ public class POJCrawler {
             List<UserTryProblem> tries = new ArrayList<>();
             for (String handle : handles) {
                 try {
+                    // 找到对应的UserOJ实体
+                    UserOJ userOj = user.getOjAccounts().stream()
+                            .filter(uo -> uo.getPlatform() == getOjType() && uo.getAccountName().equals(handle))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (userOj == null) {
+                        logger.warn("未找到用户 {} 的 {} 平台账号: {}", user.getUsername(), getOjType(), handle);
+                        continue;
+                    }
+
                     String url = String.format(statusTpl, handle);
                     logger.info("调用 POJ 用户状态页面，url：{}", url);
                     Document doc = Jsoup.connect(url)
@@ -150,6 +161,7 @@ public class POJCrawler {
                                     continue;
                                 tries.add(UserTryProblem.builder()
                                         .user(user)
+                                        .userOj(userOj) // 设置关联的OJ账号
                                         .extOjPbInfo(info)
                                         .ojName(getOjType())
                                         .result(ProblemResult.AC)

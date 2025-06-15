@@ -4,7 +4,7 @@
     "homepageLink": "https://www.luogu.com.cn/",
     "loginPageLink": "https://www.luogu.com.cn/auth/login",
     "submissionRecordsLink": "https://www.luogu.com.cn/record/list?user=%s&page=%d",
-    "userInfoLink": "https://www.luogu.com.cn/user/%s?_contentOnly=1&page=%d",
+    "userInfoLink": "https://www.luogu.com.cn/record/list?user=%s&page=%d&_contentOnly=1",
     "pbStatusLink": "https://www.luogu.com.cn/problem/list?page=%d",
     "problemLink": "https://www.luogu.com.cn/problem/%s",
     "loginLink": "https://www.luogu.com.cn/api/auth/userPassLogin",

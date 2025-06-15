@@ -139,11 +139,32 @@ public class UserTryController {
         boolean allValid = (Boolean) tokenValidation.get("allValid");
 
         if (!allValid) {
-            logger.warn("用户 {} 更新数据库时发现token失效", username);
-            Map<String, Object> data = new HashMap<>();
-            data.put("tokenValidation", tokenValidation);
-            data.put("canContinue", true);
-            return new ApiResponse<>(false, "检测到部分平台认证已失效，建议更新token后再进行数据更新", data);
+            logger.warn("用户 {} 更新数据库时发现部分平台token失效，将只更新有效的平台", username);
+
+            // 获取失效的平台信息
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> platforms = (List<Map<String, Object>>) tokenValidation.get("platforms");
+            List<String> invalidPlatforms = platforms.stream()
+                    .filter(p -> !((Boolean) p.get("valid")))
+                    .map(p -> (String) p.get("platform"))
+                    .collect(java.util.stream.Collectors.toList());
+
+            logger.info("发现以下平台token失效，将跳过这些平台的数据更新: {}", invalidPlatforms);
+
+            // 继续更新，但只更新有效的平台
+            boolean started = extOjService.triggerPartialFlushTriesDB(invalidPlatforms);
+            if (started) {
+                Map<String, Object> data = new HashMap<>();
+                data.put("tokenValidation", tokenValidation);
+                data.put("invalidPlatforms", invalidPlatforms);
+                data.put("message", "已开始更新有效平台的数据，跳过了失效的平台: " + String.join(", ", invalidPlatforms));
+
+                logger.info("管理员 {} 成功触发部分重建任务（异步），跳过平台: {}", username, invalidPlatforms);
+                return new ApiResponse<>(true, "部分更新任务已启动，请稍后查看结果", data);
+            } else {
+                logger.warn("部分重建任务未能启动，可能系统仍在更新中，用户：{}", username);
+                return ApiResponse.error("系统正在更新，请稍后再试");
+            }
         }
 
         boolean started = extOjService.triggerFlushTriesDB();

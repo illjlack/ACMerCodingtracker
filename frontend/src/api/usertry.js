@@ -52,11 +52,12 @@ export function fetchLastUpdate() {
  * @param {string} username 用户名
  * @param {number} page    0-based 页码
  * @param {number} size    每页条数
+ * @param {boolean} includeAllOjAccounts 是否包含所有关联OJ账号的记录
  * @returns Promise<AxiosResponse>
  */
-export function listUserTries(username, page = 0, size = 10) {
+export function listUserTries(username, page = 0, size = 10, includeAllOjAccounts = false) {
   return request(`/api/usertry/list/${username}`, {
-    params: { page, size }
+    params: { page, size, includeAllOjAccounts }
   })
 }
 
@@ -66,7 +67,8 @@ export function fetchUserTryProblems(params) {
     method: 'get',
     params: {
       page: params.page || 0,
-      size: params.size || 20
+      size: params.size || 20,
+      includeAllOjAccounts: params.includeAllOjAccounts || false
     }
   })
 }
