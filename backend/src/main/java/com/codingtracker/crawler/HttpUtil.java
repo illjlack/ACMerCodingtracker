@@ -251,4 +251,50 @@ public class HttpUtil {
             return 500; // 返回服务器错误状态码
         }
     }
+
+    /**
+     * 带 Cookie 的 POST 请求，最多重试 5 次
+     *
+     * @param urlString 请求地址
+     * @param postData POST数据
+     * @param cookies 要注入的 Cookie（key→value）
+     * @return 响应文本
+     */
+    public String postURL(String urlString, String postData, Map<String, String> cookies) {
+        try {
+            return repeatDo((Callable<String>) () -> {
+                logger.info("[*] postURL with cookies: {}", urlString);
+                HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
+                conn.setRequestMethod("POST");
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                conn.setDoOutput(true);
+                conn.setRequestProperty("Content-Type", "application/json");
+                conn.setRequestProperty("Accept", "application/json");
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+                conn.setRequestProperty("Origin", "https://leetcode.cn");
+                conn.setRequestProperty("Referer", "https://leetcode.cn/");
+
+                // 拼装 Cookie 头
+                if (cookies != null && !cookies.isEmpty()) {
+                    String cookieHeader = cookies.entrySet().stream()
+                            .map(e -> e.getKey() + "=" + e.getValue())
+                            .collect(Collectors.joining("; "));
+                    conn.setRequestProperty("Cookie", cookieHeader);
+                }
+
+                // 写入POST数据
+                try (java.io.OutputStream os = conn.getOutputStream()) {
+                    byte[] input = postData.getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+
+                try (InputStream in = conn.getInputStream()) {
+                    return IOUtils.toString(in, StandardCharsets.UTF_8);
+                }
+            }, 2);
+        } catch (Exception e) {
+            throw new RuntimeException("postURL with cookies 失败: " + urlString, e);
+        }
+    }
 }

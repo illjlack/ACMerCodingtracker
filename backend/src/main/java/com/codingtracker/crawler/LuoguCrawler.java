@@ -60,10 +60,15 @@ public class LuoguCrawler {
         return OJPlatform.LUOGU;
     }
 
+    /**
+     * 解析Cookie字符串为Map
+     */
     public static Map<String, String> parseCookies(String cookieHeader) {
         if (cookieHeader == null || cookieHeader.isBlank()) {
             return Map.of();
         }
+
+        // 处理传统的cookie格式
         return Arrays.stream(cookieHeader.split(";"))
                 .map(String::trim)
                 .filter(s -> s.contains("="))

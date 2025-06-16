@@ -1,15 +1,5 @@
 <template>
   <el-card class="timeline-card">
-    <!-- 控制开关 -->
-    <div class="controls">
-      <el-switch
-        v-model="showAllAccounts"
-        active-text="显示所有OJ账号"
-        inactive-text="仅显示主账号"
-        @change="handleAccountsChange"
-      />
-    </div>
-
     <!-- 加载中提示 -->
     <div v-if="loading" class="loading-tip">
       正在加载中，请稍候...
@@ -77,8 +67,7 @@ export default {
       total: 0,
       pageSize: 10,
       currentPage: 0,
-      loading: false,
-      showAllAccounts: false
+      loading: false
     }
   },
   watch: {
@@ -94,7 +83,7 @@ export default {
     async fetchPage(page) {
       this.loading = true
       try {
-        const res = await listUserTries(this.name, page, this.pageSize, this.showAllAccounts)
+        const res = await listUserTries(this.name, page, this.pageSize, false)
         if (res.success) {
           this.timeline = res.data.items
           this.total = res.data.total
@@ -114,9 +103,6 @@ export default {
     },
     formatDate(dt) {
       return dt ? dt.replace('T', ' ') : ''
-    },
-    handleAccountsChange() {
-      this.fetchPage(0) // 重新加载第一页数据
     }
   }
 }
@@ -126,9 +112,6 @@ export default {
 .timeline-card {
   padding: 20px;
   background: #fafafa;
-}
-.controls {
-  margin-bottom: 20px;
 }
 .loading-tip {
   text-align: center;

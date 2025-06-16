@@ -80,7 +80,7 @@ public class LeetCodeService implements IExtOJAdapter {
             if (isValid) {
                 return new TokenValidationResult(true, "LeetCode平台认证token有效");
             } else {
-                return new TokenValidationResult(false, "LeetCode平台认证token已失效，需要重新登录", "TOKEN_EXPIRED");
+                return new TokenValidationResult(false, "LeetCode平台认证token已过期，请重新登录获取新的token", "TOKEN_EXPIRED");
             }
         } catch (Exception e) {
             logger.error("验证LeetCode token时发生异常: {}", e.getMessage());
@@ -96,8 +96,7 @@ public class LeetCodeService implements IExtOJAdapter {
 
     @Override
     public String getTokenFormat() {
-        ExtOjLink link = getOjLink();
-        return link != null ? link.getTokenFormat() : "csrftoken=xxx; LEETCODE_SESSION=xxx; sessionid=xxx";
+        return "LEETCODE_SESSION=xxx";
     }
 
     @Override
@@ -118,23 +117,17 @@ public class LeetCodeService implements IExtOJAdapter {
             return new TokenFormatValidationResult(false, "Token不能为空");
         }
 
-        List<String> requiredFields = Arrays.asList("csrftoken", "LEETCODE_SESSION", "sessionid");
-        List<String> missingFields = new ArrayList<>();
-
-        Map<String, String> cookies = parseToken(tokenString);
-
-        for (String field : requiredFields) {
-            if (!cookies.containsKey(field) || cookies.get(field).trim().isEmpty()) {
-                missingFields.add(field);
-            }
+        // 检查是否包含LEETCODE_SESSION
+        if (!tokenString.contains("LEETCODE_SESSION=")) {
+            return new TokenFormatValidationResult(false, "LeetCode token格式错误，请使用格式：LEETCODE_SESSION=xxx");
         }
 
-        if (missingFields.isEmpty()) {
-            return new TokenFormatValidationResult(true, "LeetCode token格式正确");
-        } else {
-            String message = String.format("LeetCode token缺少必需字段: %s。正确格式: %s",
-                    String.join(", ", missingFields), getTokenFormat());
-            return new TokenFormatValidationResult(false, message, requiredFields, missingFields);
+        // 检查token值是否为空
+        String[] parts = tokenString.split("=", 2);
+        if (parts.length != 2 || parts[1].trim().isEmpty()) {
+            return new TokenFormatValidationResult(false, "LeetCode token值不能为空");
         }
+
+        return new TokenFormatValidationResult(true, "LeetCode token格式正确");
     }
 }

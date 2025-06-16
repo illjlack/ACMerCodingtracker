@@ -164,7 +164,7 @@
           </div>
           <p class="platform-description">{{ getPlatformDescription(editDialog.platform.name) }}</p>
           <p class="token-format-info">
-            <strong>Token格式:</strong> {{ editDialog.platform.tokenFormat }}
+            <strong>Token格式:</strong> {{ editDialog.platform.tokenFormat || 'key=value' }}
           </p>
         </div>
 
@@ -213,7 +213,10 @@
                     <li>按F12打开开发者工具</li>
                     <li>切换到Network标签页</li>
                     <li>刷新页面并找到任意请求</li>
-                    <li>复制请求头中的Cookie值</li>
+                    <li v-if="editDialog.platform && editDialog.platform.name === 'LEETCODE'">
+                      在请求头中找到csrftoken值，格式为：csrftoken=xxx
+                    </li>
+                    <li v-else>复制请求头中的Cookie值</li>
                   </ol>
                 </div>
               </div>
@@ -509,11 +512,27 @@ export default {
         return
       }
 
+      // 添加token格式验证
+      const token = this.editDialog.form.token.trim()
+      
+      // 基本格式验证：必须包含 =
+      if (!token.includes('=')) {
+        this.$message.warning('Token格式错误，请使用格式：key=value')
+        return
+      }
+
+      // 检查值是否为空
+      const tokenValue = token.split('=', 2)[1]
+      if (!tokenValue || tokenValue.trim() === '') {
+        this.$message.warning('Token值不能为空')
+        return
+      }
+
       this.editDialog.saving = true
       try {
         const res = await updateToken(
           this.editDialog.platform.name.toLowerCase(),
-          this.editDialog.form.token.trim()
+          token
         )
 
         if (res && res.success) {
@@ -574,7 +593,7 @@ export default {
     getPlatformDescription(platformName) {
       const descriptions = {
         'LUOGU': '洛谷需要登录后的Cookie来访问用户提交记录',
-        'LEETCODE': 'LeetCode需要登录后的Cookie来访问用户数据',
+        'LEETCODE': 'LeetCode需要csrftoken来访问用户数据，格式为：csrftoken=xxx',
         'ATCODER': 'AtCoder需要登录后的Cookie来访问用户数据',
         'TOPCODER': 'TopCoder需要登录后的Cookie来访问用户数据',
         'CODEFORCES': 'Codeforces在某些情况下需要认证token',

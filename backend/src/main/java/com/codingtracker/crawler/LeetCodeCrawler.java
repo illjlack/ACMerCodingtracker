@@ -59,6 +59,8 @@ public class LeetCodeCrawler {
         if (cookieHeader == null || cookieHeader.isBlank()) {
             return Map.of();
         }
+
+        // 处理传统的cookie格式
         return Arrays.stream(cookieHeader.split(";"))
                 .map(String::trim)
                 .filter(s -> s.contains("="))
@@ -71,36 +73,54 @@ public class LeetCodeCrawler {
      */
     public boolean validateConnection(Map<String, String> cookies) {
         try {
-            ExtOjLink link = extOjLinkRepository.findById(getOjType()).orElse(null);
-            if (link == null || link.getHomepageLink() == null) {
-                logger.warn("LeetCode平台链接配置不完整");
+            String url = "https://leetcode.cn/graphql/";
+            String query = """
+                {
+                    "query": "query { userStatus { isSignedIn } }",
+                    "variables": {}
+                }""";
+
+            Map<String, String> headers = new HashMap<>();
+            headers.put("Content-Type", "application/json");
+            headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            headers.put("Origin", "https://leetcode.cn");
+            headers.put("Referer", "https://leetcode.cn/");
+            headers.put("Cookie", "LEETCODE_SESSION=" + cookies.get("LEETCODE_SESSION"));
+
+            logger.info("发送请求到: {}", url);
+            logger.info("请求头: {}", headers);
+            logger.info("请求体: {}", query);
+
+            String response = httpUtil.postURL(url, query, headers);
+            logger.info("验证连接响应: {}", response);
+
+            if (response == null) {
+                logger.error("验证连接失败: 响应为空");
                 return false;
             }
 
-            // 使用配置的首页链接进行验证，尝试访问用户相关页面
-            String testUrl = link.getHomepageLink() + "u/user/";
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode root = mapper.readTree(response);
+            logger.info("解析后的响应: {}", root.toPrettyString());
 
-            int statusCode = httpUtil.checkHttpStatus(testUrl, cookies);
-
-            // 200表示成功访问，说明token有效
-            // 302可能是重定向到登录页面，说明token失效
-            // 401/403表示未授权，说明token失效
-            if (statusCode == 200) {
-                return true;
-            } else if (statusCode == 302 || statusCode == 401 || statusCode == 403) {
+            JsonNode data = root.get("data");
+            if (data == null) {
+                logger.error("验证连接失败: 响应格式错误");
                 return false;
-            } else {
-                // 其他状态码，尝试获取内容进行进一步判断
-                try {
-                    String response = httpUtil.readURL(testUrl, cookies);
-                    return response != null && !response.contains("登录") && !response.contains("sign-in");
-                } catch (Exception e) {
-                    logger.debug("LeetCode连接内容验证失败: {}", e.getMessage());
-                    return false;
-                }
             }
+
+            JsonNode userStatus = data.get("userStatus");
+            if (userStatus == null) {
+                logger.error("验证连接失败: 用户状态为空");
+                return false;
+            }
+
+            boolean isSignedIn = userStatus.get("isSignedIn").asBoolean();
+            logger.info("用户登录状态: {}", isSignedIn);
+            return isSignedIn;
+
         } catch (Exception e) {
-            logger.error("验证LeetCode连接失败: {}", e.getMessage());
+            logger.error("验证连接时发生异常: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -208,15 +228,22 @@ public class LeetCodeCrawler {
                         continue;
                     }
 
-                    // LeetCode使用GraphQL，需要POST请求
-                    String graphqlQuery = buildSubmissionsQuery(username);
-                    String url = String.format(submissionTemplate, username);
+                    // 构建GraphQL查询（可以分页，但我不分）
+                    String graphqlQuery = """
+                            {
+                              "query": "query userProgressQuestionList($filters: UserProgressQuestionListInput) { userProgressQuestionList(filters: $filters) { totalNum questions { translatedTitle frontendId title titleSlug difficulty lastSubmittedAt numSubmitted questionStatus lastResult topicTags { name nameTranslated slug } } } }",
+                              "variables": {
+                                "filters": {
+                                  "skip": 0,
+                                  "limit": 10000
+                                }
+                              },
+                              "operationName": "userProgressQuestionList"
+                            }
+                            """.replace("\n", "").replace(" ", "");
 
-                    // 这里需要使用POST方法发送GraphQL查询
-                    // 简化起见，我们先使用GET方式获取已Accept的题目列表
-                    logger.info("调用 LeetCode 用户提交记录接口，username：{}", username);
-
-                    String response = httpUtil.readURL(url, cookies);
+                    // 发送POST请求
+                    String response = httpUtil.postURL(submissionTemplate, graphqlQuery, cookies);
                     JsonNode root = mapper.readTree(response);
 
                     // 检查认证状态
@@ -232,16 +259,14 @@ public class LeetCodeCrawler {
                         continue;
                     }
 
-                    JsonNode data = root.path("data");
+                    JsonNode data = root.path("data").path("userProgressQuestionList");
                     if (!data.isMissingNode()) {
-                        JsonNode submissionList = data.path("recentAcSubmissionList");
-                        if (submissionList.isArray()) {
-                            // 为每个提交记录关联当前的UserOJ
-                            for (JsonNode submission : submissionList) {
-                                // 在submission节点中添加userOj信息（临时存储，用于后续处理）
-                                ((com.fasterxml.jackson.databind.node.ObjectNode) submission).put("userOjId",
-                                        userOj.getId());
-                                submissions.add(submission);
+                        JsonNode questions = data.path("questions");
+                        if (questions.isArray()) {
+                            for (JsonNode question : questions) {
+                                // 在question节点中添加userOj信息（临时存储，用于后续处理）
+                                ((com.fasterxml.jackson.databind.node.ObjectNode) question).put("userOjId", userOj.getId());
+                                submissions.add(question);
                             }
                         }
                     }
@@ -300,8 +325,8 @@ public class LeetCodeCrawler {
             List<UserTryProblem> tries = submissions.stream()
                     .map(sub -> {
                         String titleSlug = sub.path("titleSlug").asText();
-                        long timestamp = sub.path("timestamp").asLong();
-                        LocalDateTime attemptTime = LocalDateTime.ofEpochSecond(timestamp, 0, ZoneOffset.UTC);
+                        String lastSubmittedAt = sub.path("lastSubmittedAt").asText();
+                        LocalDateTime attemptTime = LocalDateTime.parse(lastSubmittedAt.replace("Z", ""));
 
                         // 获取关联的UserOJ实体
                         Integer userOjId = sub.path("userOjId").asInt();
@@ -310,12 +335,16 @@ public class LeetCodeCrawler {
                                 .findFirst()
                                 .orElse(null);
 
+                        // 获取提交结果
+                        String lastResult = sub.path("lastResult").asText();
+                        ProblemResult result = "AC".equals(lastResult) ? ProblemResult.AC : ProblemResult.WA;
+
                         return UserTryProblem.builder()
                                 .user(user)
                                 .userOj(userOj) // 设置关联的OJ账号
                                 .extOjPbInfo(infosMap.get(titleSlug))
                                 .ojName(getOjType())
-                                .result(ProblemResult.AC) // LeetCode API通常只返回AC的提交
+                                .result(result)
                                 .attemptTime(attemptTime)
                                 .build();
                     })
