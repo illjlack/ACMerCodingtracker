@@ -1,1 +1,46 @@
+# 数据库数据
 mysql-data/*
+
+# 日志文件
+logs/
+*.log
+
+# IDE文件
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# 编译输出
+target/
+build/
+out/
+dist/
+
+# 依赖
+node_modules/
+
+# 临时文件
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 环境变量文件
+.env
+.env.local
+.env.production
+
+# 上传文件
+uploads/
+avatars/
+
+# 备份文件
+*.bak
+*.backup
