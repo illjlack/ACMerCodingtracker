@@ -19,6 +19,8 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -82,10 +84,16 @@ public class LeetCodeCrawler {
 
             Map<String, String> headers = new HashMap<>();
             headers.put("Content-Type", "application/json");
+            headers.put("Accept", "application/json");
             headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
             headers.put("Origin", "https://leetcode.cn");
             headers.put("Referer", "https://leetcode.cn/");
-            headers.put("Cookie", "LEETCODE_SESSION=" + cookies.get("LEETCODE_SESSION"));
+            
+            // 直接使用cookies中的LEETCODE_SESSION值
+            String sessionValue = cookies.get("LEETCODE_SESSION");
+            if (sessionValue != null) {
+                headers.put("Cookie", "LEETCODE_SESSION=" + sessionValue);
+            }
 
             logger.info("发送请求到: {}", url);
             logger.info("请求头: {}", headers);
@@ -240,10 +248,24 @@ public class LeetCodeCrawler {
                               },
                               "operationName": "userProgressQuestionList"
                             }
-                            """.replace("\n", "").replace(" ", "");
+                            """;
+
+                    // 构建请求头
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Content-Type", "application/json");
+                    headers.put("Accept", "application/json");
+                    headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+                    headers.put("Origin", "https://leetcode.cn");
+                    headers.put("Referer", "https://leetcode.cn/");
+                    
+                    // 添加Cookie
+                    String sessionValue = cookies.get("LEETCODE_SESSION");
+                    if (sessionValue != null) {
+                        headers.put("Cookie", "LEETCODE_SESSION=" + sessionValue);
+                    }
 
                     // 发送POST请求
-                    String response = httpUtil.postURL(submissionTemplate, graphqlQuery, cookies);
+                    String response = httpUtil.postURL(submissionTemplate, graphqlQuery, headers);
                     JsonNode root = mapper.readTree(response);
 
                     // 检查认证状态
@@ -326,7 +348,23 @@ public class LeetCodeCrawler {
                     .map(sub -> {
                         String titleSlug = sub.path("titleSlug").asText();
                         String lastSubmittedAt = sub.path("lastSubmittedAt").asText();
-                        LocalDateTime attemptTime = LocalDateTime.parse(lastSubmittedAt.replace("Z", ""));
+                        
+                        // 解析包含时区信息的时间格式
+                        LocalDateTime attemptTime;
+                        try {
+                            // 尝试解析ISO 8601格式（包含时区信息）
+                            ZonedDateTime zonedDateTime = ZonedDateTime.parse(lastSubmittedAt);
+                            attemptTime = zonedDateTime.toLocalDateTime();
+                        } catch (Exception e) {
+                            // 如果解析失败，尝试移除时区信息后解析
+                            try {
+                                String cleanTime = lastSubmittedAt.replaceAll("\\+\\d{2}:?\\d{2}$", "").replace("Z", "");
+                                attemptTime = LocalDateTime.parse(cleanTime);
+                            } catch (Exception e2) {
+                                logger.warn("无法解析时间格式: {}, 使用当前时间", lastSubmittedAt);
+                                attemptTime = LocalDateTime.now();
+                            }
+                        }
 
                         // 获取关联的UserOJ实体
                         Integer userOjId = sub.path("userOjId").asInt();

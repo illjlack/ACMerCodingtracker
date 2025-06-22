@@ -257,30 +257,24 @@ public class HttpUtil {
      *
      * @param urlString 请求地址
      * @param postData POST数据
-     * @param cookies 要注入的 Cookie（key→value）
+     * @param headers 请求头
      * @return 响应文本
      */
-    public String postURL(String urlString, String postData, Map<String, String> cookies) {
+    public String postURL(String urlString, String postData, Map<String, String> headers) {
         try {
             return repeatDo((Callable<String>) () -> {
-                logger.info("[*] postURL with cookies: {}", urlString);
+                logger.info("[*] postURL: {}", urlString);
                 HttpURLConnection conn = (HttpURLConnection) new URL(urlString).openConnection();
                 conn.setRequestMethod("POST");
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
                 conn.setDoOutput(true);
-                conn.setRequestProperty("Content-Type", "application/json");
-                conn.setRequestProperty("Accept", "application/json");
-                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-                conn.setRequestProperty("Origin", "https://leetcode.cn");
-                conn.setRequestProperty("Referer", "https://leetcode.cn/");
 
-                // 拼装 Cookie 头
-                if (cookies != null && !cookies.isEmpty()) {
-                    String cookieHeader = cookies.entrySet().stream()
-                            .map(e -> e.getKey() + "=" + e.getValue())
-                            .collect(Collectors.joining("; "));
-                    conn.setRequestProperty("Cookie", cookieHeader);
+                // 设置请求头
+                if (headers != null) {
+                    for (Map.Entry<String, String> entry : headers.entrySet()) {
+                        conn.setRequestProperty(entry.getKey(), entry.getValue());
+                    }
                 }
 
                 // 写入POST数据
@@ -294,7 +288,7 @@ public class HttpUtil {
                 }
             }, 2);
         } catch (Exception e) {
-            throw new RuntimeException("postURL with cookies 失败: " + urlString, e);
+            throw new RuntimeException("postURL 失败: " + urlString, e);
         }
     }
 }

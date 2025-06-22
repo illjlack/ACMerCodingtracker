@@ -25,7 +25,7 @@ public class ExtOjPbInfo implements Serializable {
     @Enumerated(EnumType.STRING)
     private OJPlatform ojName;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 200, nullable = false)
     private String pid;
 
     @Column(length = 1024)

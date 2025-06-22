@@ -1,0 +1,180 @@
+2025-06-23 02:07:41.899 [http-nio-8080-exec-3] INFO  com.codingtracker.service.extoj.LUOGUService - 验证洛谷token
+2025-06-23 02:07:42.799 [http-nio-8080-exec-3] INFO  com.codingtracker.service.extoj.LeetCodeService - 验证LeetCode token
+2025-06-23 02:07:43.142 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新所有用户的尝试记录...
+2025-06-23 02:07:43.158 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 开始抓取 5 位用户的尝试记录
+2025-06-23 02:07:43.171 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:07:43.179 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:07:43.190 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:07:46.300 [http-nio-8080-exec-5] INFO  com.codingtracker.service.extoj.LeetCodeService - 验证LeetCode token
+2025-06-23 02:07:47.214 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user001 共抓取到 1026 条尝试记录
+2025-06-23 02:07:47.219 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:07:47.222 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:07:47.227 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:07:47.233 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:07:47.239 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:07:47.247 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:07:47.939 [http-nio-8080-exec-4] INFO  com.codingtracker.service.extoj.LUOGUService - 验证洛谷token
+2025-06-23 02:07:50.251 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 test 共抓取到 10509 条尝试记录
+2025-06-23 02:07:50.255 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:07:50.259 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.077 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user001 共抓取到 883 条尝试记录
+2025-06-23 02:08:09.084 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.515 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.523 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.529 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.536 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.546 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.550 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.555 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.562 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:08:09.566 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:10:19.581 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 test 共抓取到 4260 条尝试记录
+2025-06-23 02:10:19.605 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 抓取完成，共 16678 条尝试记录
+2025-06-23 02:10:20.260 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 已更新 0 位用户的最后尝试时间
+2025-06-23 02:10:20.264 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新完成，新增 0 条记录，最后更新时间 2025-06-23T02:10:20.262139697
+2025-06-23 02:10:20.264 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 尝试重建冗余表...
+2025-06-23 02:10:20.269 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】开始重建冗余表
+2025-06-23 02:10:33.707 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】成功保存 16678 条冗余记录
+2025-06-23 02:15:49.802 [http-nio-8080-exec-6] INFO  com.codingtracker.service.extoj.LeetCodeService - 验证LeetCode token
+2025-06-23 02:15:51.744 [http-nio-8080-exec-2] INFO  com.codingtracker.service.extoj.LUOGUService - 验证洛谷token
+2025-06-23 02:15:55.575 [http-nio-8080-exec-7] INFO  com.codingtracker.service.extoj.LUOGUService - 验证洛谷token
+2025-06-23 02:15:55.715 [http-nio-8080-exec-7] INFO  com.codingtracker.service.extoj.LeetCodeService - 验证LeetCode token
+2025-06-23 02:15:56.025 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新所有用户的尝试记录...
+2025-06-23 02:15:56.035 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 开始抓取 5 位用户的尝试记录
+2025-06-23 02:15:56.051 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:15:56.057 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:15:56.064 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:15:59.093 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user001 共抓取到 1026 条尝试记录
+2025-06-23 02:15:59.102 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:15:59.111 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:15:59.117 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:15:59.125 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:15:59.130 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:15:59.136 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:16:01.106 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 test 共抓取到 10509 条尝试记录
+2025-06-23 02:16:01.112 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:16:01.117 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:16:19.741 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user001 共抓取到 883 条尝试记录
+2025-06-23 02:16:19.753 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.246 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.250 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.257 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.265 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.270 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.275 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.279 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:16:20.283 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:18:29.199 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 test 共抓取到 4260 条尝试记录
+2025-06-23 02:18:29.221 [ScheduledTask-2] ERROR com.codingtracker.service.ExtOjService - 获取尝试记录失败
+java.util.concurrent.ExecutionException: org.springframework.transaction.UnexpectedRollbackException: Transaction silently rolled back because it has been marked as rollback-only
+	at java.base/java.util.concurrent.FutureTask.report(FutureTask.java:122)
+	at java.base/java.util.concurrent.FutureTask.get(FutureTask.java:205)
+	at com.codingtracker.service.ExtOjService.fetchAllUserTries(ExtOjService.java:134)
+	at com.codingtracker.service.ExtOjService.flushTriesDB(ExtOjService.java:201)
+	at com.codingtracker.service.ExtOjService.asyncFlushTriesDB(ExtOjService.java:97)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:568)
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:359)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:380)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.interceptor.AsyncExecutionInterceptor.lambda$invoke$0(AsyncExecutionInterceptor.java:114)
+	at org.springframework.scheduling.concurrent.DelegatingErrorHandlingCallable.call(DelegatingErrorHandlingCallable.java:52)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	at java.base/java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:304)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+	at java.base/java.lang.Thread.run(Thread.java:833)
+Caused by: org.springframework.transaction.UnexpectedRollbackException: Transaction silently rolled back because it has been marked as rollback-only
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processCommit(AbstractPlatformTransactionManager.java:804)
+	at org.springframework.transaction.support.AbstractPlatformTransactionManager.commit(AbstractPlatformTransactionManager.java:758)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.commitTransactionAfterReturning(TransactionAspectSupport.java:698)
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:416)
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119)
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184)
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:727)
+	at com.codingtracker.crawler.LeetCodeCrawler$$SpringCGLIB$$0.userTryProblems(<generated>)
+	at com.codingtracker.service.extoj.LeetCodeService.getUserTriesOnline(LeetCodeService.java:54)
+	at com.codingtracker.service.ExtOjService.lambda$fetchAllUserTries$0(ExtOjService.java:119)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264)
+	... 3 common frames omitted
+2025-06-23 02:18:29.225 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 抓取完成，共 16678 条尝试记录
+2025-06-23 02:18:30.152 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 已更新 0 位用户的最后尝试时间
+2025-06-23 02:18:30.154 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新完成，新增 0 条记录，最后更新时间 2025-06-23T02:18:30.152358607
+2025-06-23 02:18:30.154 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 尝试重建冗余表...
+2025-06-23 02:18:30.161 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】开始重建冗余表
+2025-06-23 02:18:43.589 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】成功保存 16678 条冗余记录
+2025-06-23 02:22:20.835 [http-nio-8080-exec-6] INFO  com.codingtracker.service.extoj.LUOGUService - 验证洛谷token
+2025-06-23 02:22:21.662 [http-nio-8080-exec-6] INFO  com.codingtracker.service.extoj.LeetCodeService - 验证LeetCode token
+2025-06-23 02:22:22.038 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新所有用户的尝试记录...
+2025-06-23 02:22:22.052 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 开始抓取 5 位用户的尝试记录
+2025-06-23 02:22:22.070 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:22:22.079 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:22:22.088 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:22:24.427 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user001 共抓取到 1026 条尝试记录
+2025-06-23 02:22:24.437 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:22:24.442 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:22:24.447 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:22:24.451 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:22:24.455 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:22:24.461 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:22:44.870 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 test 共抓取到 10509 条尝试记录
+2025-06-23 02:22:44.878 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:22:44.887 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:22:45.118 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user001 共抓取到 883 条尝试记录
+2025-06-23 02:22:45.126 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.064 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.071 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.077 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.083 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.092 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.098 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.104 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.110 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:22:46.115 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:25:11.911 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 test 共抓取到 4260 条尝试记录
+2025-06-23 02:25:11.933 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 抓取完成，共 16678 条尝试记录
+2025-06-23 02:25:12.701 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 已更新 0 位用户的最后尝试时间
+2025-06-23 02:25:12.704 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新完成，新增 0 条记录，最后更新时间 2025-06-23T02:25:12.702628212
+2025-06-23 02:25:12.705 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 尝试重建冗余表...
+2025-06-23 02:25:12.709 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】开始重建冗余表
+2025-06-23 02:25:26.106 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】成功保存 16678 条冗余记录
+2025-06-23 02:29:12.673 [http-nio-8080-exec-2] INFO  com.codingtracker.service.extoj.LUOGUService - 验证洛谷token
+2025-06-23 02:29:13.455 [http-nio-8080-exec-2] INFO  com.codingtracker.service.extoj.LeetCodeService - 验证LeetCode token
+2025-06-23 02:29:13.811 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新所有用户的尝试记录...
+2025-06-23 02:29:13.823 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 开始抓取 5 位用户的尝试记录
+2025-06-23 02:29:13.849 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:29:13.865 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:29:13.890 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:29:16.283 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 user001 共抓取到 1026 条尝试记录
+2025-06-23 02:29:16.291 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:29:16.296 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:29:16.301 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:29:16.307 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:29:16.314 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.HDUService - HDU 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:29:16.322 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:29:19.198 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.CFService - Codeforces 用户 test 共抓取到 10509 条尝试记录
+2025-06-23 02:29:19.212 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:29:19.243 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.448 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 user001 共抓取到 883 条尝试记录
+2025-06-23 02:29:37.457 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.962 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user001 共抓取到 44 条尝试记录
+2025-06-23 02:29:37.966 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.971 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.976 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.LeetCodeService - LeetCode 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.982 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 admin 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.987 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user001 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.992 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user002 共抓取到 0 条尝试记录
+2025-06-23 02:29:37.999 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 user003 共抓取到 0 条尝试记录
+2025-06-23 02:29:38.003 [pool-2-thread-2] INFO  com.codingtracker.service.extoj.POJService - POJ 用户 test 共抓取到 0 条尝试记录
+2025-06-23 02:31:46.112 [pool-2-thread-1] INFO  com.codingtracker.service.extoj.LUOGUService - Luogu 用户 test 共抓取到 4260 条尝试记录
+2025-06-23 02:31:46.149 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 抓取完成，共 16722 条尝试记录
+2025-06-23 02:31:47.161 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 已更新 1 位用户的最后尝试时间
+2025-06-23 02:31:47.164 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 刷新完成，新增 44 条记录，最后更新时间 2025-06-23T02:31:47.161462667
+2025-06-23 02:31:47.164 [ScheduledTask-2] INFO  com.codingtracker.service.ExtOjService - 尝试重建冗余表...
+2025-06-23 02:31:47.167 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】开始重建冗余表
+2025-06-23 02:32:00.185 [ScheduledTask-2] INFO  com.codingtracker.service.DataMigrationService - 【DataMigration】成功保存 16678 条冗余记录

@@ -101,14 +101,25 @@ public class LeetCodeService implements IExtOJAdapter {
 
     @Override
     public Map<String, String> parseToken(String tokenString) {
-        if (tokenString == null || tokenString.isBlank()) {
-            return Map.of();
+        Map<String, String> cookies = new HashMap<>();
+        if (tokenString == null || tokenString.trim().isEmpty()) {
+            return cookies;
         }
-        return Arrays.stream(tokenString.split(";"))
-                .map(String::trim)
-                .filter(s -> s.contains("="))
-                .map(s -> s.split("=", 2))
-                .collect(Collectors.toMap(a -> a[0], a -> a[1]));
+
+        // 提取LEETCODE_SESSION的值
+        if (tokenString.contains("LEETCODE_SESSION=")) {
+            String[] parts = tokenString.split("LEETCODE_SESSION=", 2);
+            if (parts.length == 2) {
+                String value = parts[1].trim();
+                // 如果值后面还有分号，去掉分号
+                if (value.endsWith(";")) {
+                    value = value.substring(0, value.length() - 1);
+                }
+                cookies.put("LEETCODE_SESSION", value);
+            }
+        }
+
+        return cookies;
     }
 
     @Override
