@@ -37,7 +37,7 @@ public class UserTryProblemOptimized {
     @Column(nullable = false, length = 64)
     private String ojName;  // OJ 名称
 
-    @Column(length = 50)
+    @Column(length = 200)
     private String pid;  // 题目ID（平台）
 
     @Column(length = 1024)
